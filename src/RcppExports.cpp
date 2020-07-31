@@ -5,19 +5,157 @@
 
 using namespace Rcpp;
 
-// rcpp_hello_world
-List rcpp_hello_world();
-RcppExport SEXP _iNEXTPD2_rcpp_hello_world() {
+// Dq0
+double Dq0(double n, double f1, double f2, double g1, double g2);
+RcppExport SEXP _iNEXTPD2_Dq0(SEXP nSEXP, SEXP f1SEXP, SEXP f2SEXP, SEXP g1SEXP, SEXP g2SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(rcpp_hello_world());
+    Rcpp::traits::input_parameter< double >::type n(nSEXP);
+    Rcpp::traits::input_parameter< double >::type f1(f1SEXP);
+    Rcpp::traits::input_parameter< double >::type f2(f2SEXP);
+    Rcpp::traits::input_parameter< double >::type g1(g1SEXP);
+    Rcpp::traits::input_parameter< double >::type g2(g2SEXP);
+    rcpp_result_gen = Rcpp::wrap(Dq0(n, f1, f2, g1, g2));
+    return rcpp_result_gen;
+END_RCPP
+}
+// Dq1_2
+double Dq1_2(double n, double g1, double A);
+RcppExport SEXP _iNEXTPD2_Dq1_2(SEXP nSEXP, SEXP g1SEXP, SEXP ASEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type n(nSEXP);
+    Rcpp::traits::input_parameter< double >::type g1(g1SEXP);
+    Rcpp::traits::input_parameter< double >::type A(ASEXP);
+    rcpp_result_gen = Rcpp::wrap(Dq1_2(n, g1, A));
+    return rcpp_result_gen;
+END_RCPP
+}
+// Dq2
+double Dq2(NumericMatrix tmpaL, double n, double t_bar);
+RcppExport SEXP _iNEXTPD2_Dq2(SEXP tmpaLSEXP, SEXP nSEXP, SEXP t_barSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type tmpaL(tmpaLSEXP);
+    Rcpp::traits::input_parameter< double >::type n(nSEXP);
+    Rcpp::traits::input_parameter< double >::type t_bar(t_barSEXP);
+    rcpp_result_gen = Rcpp::wrap(Dq2(tmpaL, n, t_bar));
+    return rcpp_result_gen;
+END_RCPP
+}
+// Dq_2nd
+double Dq_2nd(double n, double g1, double A, double q);
+RcppExport SEXP _iNEXTPD2_Dq_2nd(SEXP nSEXP, SEXP g1SEXP, SEXP ASEXP, SEXP qSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type n(nSEXP);
+    Rcpp::traits::input_parameter< double >::type g1(g1SEXP);
+    Rcpp::traits::input_parameter< double >::type A(ASEXP);
+    Rcpp::traits::input_parameter< double >::type q(qSEXP);
+    rcpp_result_gen = Rcpp::wrap(Dq_2nd(n, g1, A, q));
+    return rcpp_result_gen;
+END_RCPP
+}
+// Dq
+NumericVector Dq(NumericMatrix tmpaL, int n, NumericVector qs, double g1, double A, double t_bar);
+RcppExport SEXP _iNEXTPD2_Dq(SEXP tmpaLSEXP, SEXP nSEXP, SEXP qsSEXP, SEXP g1SEXP, SEXP ASEXP, SEXP t_barSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type tmpaL(tmpaLSEXP);
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type qs(qsSEXP);
+    Rcpp::traits::input_parameter< double >::type g1(g1SEXP);
+    Rcpp::traits::input_parameter< double >::type A(ASEXP);
+    Rcpp::traits::input_parameter< double >::type t_bar(t_barSEXP);
+    rcpp_result_gen = Rcpp::wrap(Dq(tmpaL, n, qs, g1, A, t_bar));
+    return rcpp_result_gen;
+END_RCPP
+}
+// delta
+double delta(NumericMatrix del_tmpaL, double k, double n);
+RcppExport SEXP _iNEXTPD2_delta(SEXP del_tmpaLSEXP, SEXP kSEXP, SEXP nSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type del_tmpaL(del_tmpaLSEXP);
+    Rcpp::traits::input_parameter< double >::type k(kSEXP);
+    Rcpp::traits::input_parameter< double >::type n(nSEXP);
+    rcpp_result_gen = Rcpp::wrap(delta(del_tmpaL, k, n));
+    return rcpp_result_gen;
+END_RCPP
+}
+// delta_part2
+NumericVector delta_part2(NumericVector ai, double k, double n);
+RcppExport SEXP _iNEXTPD2_delta_part2(SEXP aiSEXP, SEXP kSEXP, SEXP nSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type ai(aiSEXP);
+    Rcpp::traits::input_parameter< double >::type k(kSEXP);
+    Rcpp::traits::input_parameter< double >::type n(nSEXP);
+    rcpp_result_gen = Rcpp::wrap(delta_part2(ai, k, n));
+    return rcpp_result_gen;
+END_RCPP
+}
+// RPD_old
+NumericVector RPD_old(NumericMatrix x, int n, int m, NumericVector q);
+RcppExport SEXP _iNEXTPD2_RPD_old(SEXP xSEXP, SEXP nSEXP, SEXP mSEXP, SEXP qSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type m(mSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type q(qSEXP);
+    rcpp_result_gen = Rcpp::wrap(RPD_old(x, n, m, q));
+    return rcpp_result_gen;
+END_RCPP
+}
+// RPD
+NumericMatrix RPD(NumericVector ai, NumericMatrix Lis, int n, int m, NumericVector q);
+RcppExport SEXP _iNEXTPD2_RPD(SEXP aiSEXP, SEXP LisSEXP, SEXP nSEXP, SEXP mSEXP, SEXP qSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type ai(aiSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type Lis(LisSEXP);
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type m(mSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type q(qSEXP);
+    rcpp_result_gen = Rcpp::wrap(RPD(ai, Lis, n, m, q));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ghat_pt2
+NumericMatrix ghat_pt2(NumericVector ai, int n, int mmax);
+RcppExport SEXP _iNEXTPD2_ghat_pt2(SEXP aiSEXP, SEXP nSEXP, SEXP mmaxSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type ai(aiSEXP);
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type mmax(mmaxSEXP);
+    rcpp_result_gen = Rcpp::wrap(ghat_pt2(ai, n, mmax));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_iNEXTPD2_rcpp_hello_world", (DL_FUNC) &_iNEXTPD2_rcpp_hello_world, 0},
+    {"_iNEXTPD2_Dq0", (DL_FUNC) &_iNEXTPD2_Dq0, 5},
+    {"_iNEXTPD2_Dq1_2", (DL_FUNC) &_iNEXTPD2_Dq1_2, 3},
+    {"_iNEXTPD2_Dq2", (DL_FUNC) &_iNEXTPD2_Dq2, 3},
+    {"_iNEXTPD2_Dq_2nd", (DL_FUNC) &_iNEXTPD2_Dq_2nd, 4},
+    {"_iNEXTPD2_Dq", (DL_FUNC) &_iNEXTPD2_Dq, 6},
+    {"_iNEXTPD2_delta", (DL_FUNC) &_iNEXTPD2_delta, 3},
+    {"_iNEXTPD2_delta_part2", (DL_FUNC) &_iNEXTPD2_delta_part2, 3},
+    {"_iNEXTPD2_RPD_old", (DL_FUNC) &_iNEXTPD2_RPD_old, 4},
+    {"_iNEXTPD2_RPD", (DL_FUNC) &_iNEXTPD2_RPD, 5},
+    {"_iNEXTPD2_ghat_pt2", (DL_FUNC) &_iNEXTPD2_ghat_pt2, 3},
     {NULL, NULL, 0}
 };
 
