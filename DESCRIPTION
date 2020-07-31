@@ -1,6 +1,6 @@
 Package: iNEXTPD2
 Type: Package
-Title: Phylogenetic Diversity
+Title: Interpolation and extrapolation with phylogenetic diversity
 Version: 1.0.0
 Author: Anne Chao, Yan-Han Chen and Chun-Huo Chiu
 Maintainer: Anne Chao <chao@stat.nthu.edu.tw>
