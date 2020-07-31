@@ -678,9 +678,6 @@ PDInfo <- function(data,nT,datatype = "abundance", tree,reftime=NULL){
   DATATYPE <- c("abundance", "incidence_raw")
   if(is.na(pmatch(datatype, DATATYPE)) == T)
     stop("Invalid datatype", call. = FALSE)
-  divtype <- c("PD", "meanPD")
-  if(is.na(pmatch(type, divtype)) == T)
-    stop("Incorrect type of desired diversity type, please use either PD or meanPD.", call. = FALSE)
   if(c("numeric") %in% class(data) | c("integer") %in% class(data) | c("double") %in% class(data) ) data <- as.matrix(data)
   if(is.null(rownames(data) ))
     stop("Row names of data must be the species names that match tip names in tree and thus can not be empty.", call. = FALSE)
@@ -828,6 +825,8 @@ ggtqplotPD <- function(outcome,profile = 'q'){
     Plotq(out = outcome)
   }else if (profile=='time'){
     Plott(out = outcome)
+  }else{
+    stop("Invalid profile type, please use either q or time.", call. = FALSE)
   }
 }
 
