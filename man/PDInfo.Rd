@@ -29,7 +29,7 @@ frequency counts and their branch length sums, at specified/default reference ti
 See Chao et al. (2010, 2015) and Hsieh and Chao (2017) for formulas and interpretations.
 }
 \description{
-\code{PDInfo} summarizes phylogenetic data statistics for specified/default reference time.
+Function \code{PDInfo} summarizes phylogenetic data statistics for specified/default reference time.
 }
 \examples{
 \donttest{

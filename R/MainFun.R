@@ -219,7 +219,7 @@ iNEXTPD <- function(data,nT,datatype = "abundance",tree,q = c(0,1,2),reftime=NUL
 
 #' Computes asymptotic estimates for phylogenetic diversity and mean phylogenetic diversity (phylogenetic Hill numbers)
 #'
-#' \code{PhdAsy} computes asymptotic phylogenetic diversity estimates with respect to specified/default
+#' Function \code{PhdAsy} computes asymptotic phylogenetic diversity estimates with respect to specified/default
 #' diversity order q and reference time to infer true phylogenetic diversity (PD) or phylogenetic Hill numbers (meanPD). See Chao et al. (2015) and Hsieh and Chao (2017) for the statistical estimation detail.
 #' @param data a matrix/data.frame of species abundances (for abundance data) or species-by-site incidence raw matrix/data.frame (for incidence data).
 #' See the function \code{\link{iNEXTPD}} for details.
@@ -337,7 +337,7 @@ PhdAsy <- function(data,nT,datatype = "abundance",tree,q = seq(0,2,by = 0.25),re
 
 #' Computes observed phylogenetic diversity and phylogenetic Hill numbers
 #'
-#' \code{PhdObs} computes empirical or observed phylogenetic diversity (PD) and phylogenetic Hill
+#' Function \code{PhdObs} computes empirical or observed phylogenetic diversity (PD) and phylogenetic Hill
 #' numbers (meanPD, mean phylogenetic diversity) for specified/default order \code{q} and reference
 #' time specified in the argument \code{reftime}. See Chao et al. (2010) for details of PD and meanPD.
 #' @param data a matrix/data.frame of species abundances (for abundance data) or species-by-site incidence raw matrix/data.frame (for incidence data).
@@ -507,7 +507,7 @@ PhdObs <- function(data,nT,datatype = "abundance",tree,q = seq(0, 2, by = 0.25),
 
 #' Computes phylogenetic diversity for specified values of sample coverage
 #'
-#' \code{EstimatePD} computes Chao et al.’s (2010, 2016) phylogenetic diversity (PD, effective total branch lengths,
+#' Function \code{estimatePD} computes Chao et al.’s (2010, 2016) phylogenetic diversity (PD, effective total branch lengths,
 #' for diversity order q = 0, 1 and 2) and mean phylogenetic diversity (meanPD, phylogenetic Hill
 #' numbers or the effective number of lineages, q = 0, 1 and 2) at specified values of sample coverage. See Chao et al. (2010, 2015) and Hsieh and Chao (2017) for formulas and interpretations.
 #' Use the function \code{iNEXTPD} to compute PD or meanPD for specified sample sizes.
@@ -635,7 +635,7 @@ estimatePD <- function(data,nT,datatype = "abundance",tree,q = c(0,1,2),reftime=
 
 #' Summarizes phylogenetic data information.
 #'
-#' \code{PDInfo} summarizes phylogenetic data statistics for specified/default reference time.
+#' Function \code{PDInfo} summarizes phylogenetic data statistics for specified/default reference time.
 #' @param data a matrix/data.frame of species abundances (for abundance data) or species-by-site incidence raw matrix/data.frame (for incidence data).
 #' See the function \code{\link{iNEXTPD}} for details.
 #' @param nT needed only when \code{datatype = "incidence_raw"}, a sequence of named nonnegative integers specifying the number of sampling units in each assemblage.
@@ -829,6 +829,7 @@ ggtqplotPD <- function(outcome,profile = 'q'){
     stop("Invalid profile type, please use either q or time.", call. = FALSE)
   }
 }
+
 
 #' @useDynLib iNEXTPD2
 #' @importFrom Rcpp sourceCpp

@@ -47,7 +47,7 @@ Returns a table of empirical (observed) phylogenetic diversity (\code{type = "PD
 for specified/default order q and reference time.
 }
 \description{
-\code{PhdObs} computes empirical or observed phylogenetic diversity (PD) and phylogenetic Hill
+Function \code{PhdObs} computes empirical or observed phylogenetic diversity (PD) and phylogenetic Hill
 numbers (meanPD, mean phylogenetic diversity) for specified/default order \code{q} and reference
 time specified in the argument \code{reftime}. See Chao et al. (2010) for details of PD and meanPD.
 }

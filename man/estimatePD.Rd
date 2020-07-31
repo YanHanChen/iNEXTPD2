@@ -50,7 +50,7 @@ Returns a table of the computed phylogenetic diversity (PD or meanPD) for specif
 for the user-specified values of sample coverage. The corresponding sample sizes and sample coverage values are also provided.
 }
 \description{
-\code{EstimatePD} computes Chao et al.’s (2010, 2016) phylogenetic diversity (PD, effective total branch lengths,
+Function \code{estimatePD} computes Chao et al.’s (2010, 2016) phylogenetic diversity (PD, effective total branch lengths,
 for diversity order q = 0, 1 and 2) and mean phylogenetic diversity (meanPD, phylogenetic Hill
 numbers or the effective number of lineages, q = 0, 1 and 2) at specified values of sample coverage. See Chao et al. (2010, 2015) and Hsieh and Chao (2017) for formulas and interpretations.
 Use the function \code{iNEXTPD} to compute PD or meanPD for specified sample sizes.

@@ -48,7 +48,7 @@ phylogenetic Hill numbers (\code{type = "meanPD"}) with respect to specified/def
 reference time specified in the argument \code{reftime}.
 }
 \description{
-\code{PhdAsy} computes asymptotic phylogenetic diversity estimates with respect to specified/default
+Function \code{PhdAsy} computes asymptotic phylogenetic diversity estimates with respect to specified/default
 diversity order q and reference time to infer true phylogenetic diversity (PD) or phylogenetic Hill numbers (meanPD). See Chao et al. (2015) and Hsieh and Chao (2017) for the statistical estimation detail.
 }
 \examples{

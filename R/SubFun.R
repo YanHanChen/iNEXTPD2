@@ -1,3 +1,10 @@
+## quiets concerns of R CMD check re: the .'s that appear in pipelines
+utils::globalVariables(c("Inode", "LCL", "Method", "Order.q", "Reference.time", "SC", "Type",
+                         "UCL", "branch.abun", "branch.height", "branch.length","branch.length.new", 
+                         "cumsum.length", "e", "edgelengthv", "goalSC","label", "label.new", 
+                         "length.new", "m", "newlabel","node", "node.age", "nt", "qPD", "qPD.LCL", 
+                         "qPD.UCL", "refT", "tgroup", "tmp", "x", "y","Assemblage","S.obs","PD.obs",
+                         "f1*","f2*","g1","g2","Q1*","Q2*","R1","R2","newlable",".")) 
 #===============PhDObs==================
 datainf <- function(data, datatype, phylotr,reft){
   if(datatype == "abundance"){
@@ -315,100 +322,102 @@ EmpPD <- function(datalist,datatype, phylotr, q, reft, cal, nboot, conf){
     arrange(Reference.time)
   return(Output)
 }
-AUC_one_table <- function(datalist, phylotr, knot, cal, datatype, nboot, conf, reft_max) {
-  qtile <- qnorm(1-(1-conf)/2)
-  times_AUC <- seq(0.01, reft_max, length.out = knot)
-  nms <- names(datalist)
-  q_int <- c(0, 1, 2)
-  if(datatype=="abundance"){
-    AUC <- lapply(1:length(datalist),function(i){
-      aL <- phyBranchAL_Abu(phylo = phylotr,data = datalist[[i]],datatype,refT = times_AUC)
-      x <- datalist[[i]] %>% .[.>0]
-      n <- sum(x)
-      emp <- PD.Tprofile(ai = aL$treeNabu$branch.abun,Lis=aL$BLbyT,
-                         q=q_int,cal = cal, nt = n)
-      # print(paste0("emp:",dim(emp)," AUC diff:",length(c(diff(times_AUC),0))))
-      LA <-  c(diff(times_AUC),0) %*% emp %>% as.numeric()
-      RA <-   c(0,diff(times_AUC)) %*% emp %>% as.numeric()
-      auc <- colMeans(rbind(LA,RA))
-      if(nboot!=0){
-        Boots <- Boots.one(phylo = phylotr,aL = aL$treeNabu,datatype,nboot,reft = times_AUC, BLs = aL$BLbyT )
-        Lis_b <- Boots$Li
-        Lis_b <- sapply(1:length(times_AUC),function(l){
-          tmp <- Lis_b[,l]
-          tmp[tmp>times_AUC[l]] <- times_AUC[l]
-          tmp
-        })
-        f0 <- Boots$f0
-        tgroup_B <- c(rep("Tip",length(x)+f0),rep("Inode",nrow(Lis_b)-length(x)-f0))
-        
-        ses <- sapply(1:nboot, function(B){
-          x_b <- Boots$boot_data[,B]
-          isn0 <- as.vector(x_b>0)
-          Lis_b_tmp <- Lis_b[isn0,]
-          tgroup_B_tmp <- tgroup_B[isn0]
-          x_b <- x_b[isn0]
-          out_b <- PD.Tprofile(ai = x_b,Lis=Lis_b_tmp,q=q_int,cal = cal,nt = n)
-          LA_b <-  c(diff(times_AUC),0) %*% out_b %>% as.numeric()
-          RA_b <-   c(0,diff(times_AUC)) %*% out_b %>% as.numeric()
-          auc_b <- colMeans(rbind(LA_b,RA_b))
-          auc_b
-        }) %>% apply(., 1, sd)
-      }else{
-        ses <- rep(NA,length(auc))
-      }
-      output <- cbind(auc,auc-qtile*ses,auc+qtile*ses)
-      output[output[,2]<0,2] <- 0
-      output
-    }) %>% do.call(rbind,.)
-  }else if (datatype=="incidence_raw"){
-    AUC <- lapply(1:length(datalist), function(i){
-      aL <- phyBranchAL_Inc(phylo = phylotr,data = datalist[[i]],datatype,refT = times_AUC)
-      x <- datalist[[i]] %>% .[rowSums(.)>0,]
-      n <- ncol(x)
-      emp <- PD.Tprofile(ai = aL$treeNabu$branch.abun,Lis=aL$BLbyT,
-                         q=q_int,cal = cal,nt = n)
-      LA <-  c(diff(times_AUC),0) %*% emp %>% as.numeric()
-      RA <-   c(0,diff(times_AUC)) %*% emp %>% as.numeric()
-      auc <- colMeans(rbind(LA,RA))
-      if(nboot!=0){
-        Boots <- Boots.one(phylo = phylotr,aL = aL$treeNabu,datatype,nboot,reft = times_AUC,
-                           BLs = aL$BLbyT,splunits = n)
-        Lis_b <- Boots$Li
-        Lis_b <- sapply(1:length(times_AUC),function(l){
-          tmp <- Lis_b[,l]
-          tmp[tmp>times_AUC[l]] <- times_AUC[l]
-          tmp
-        })
-        f0 <- Boots$f0
-        tgroup_B <- c(rep("Tip",nrow(x)+f0),rep("Inode",nrow(Lis_b)-nrow(x)-f0))
-        ses <- sapply(1:nboot, function(B){
-          x_b <- Boots$boot_data[,B]
-          isn0 <- as.vector(x_b>0)
-          Lis_b_tmp <- Lis_b[isn0,]
-          tgroup_B_tmp <- tgroup_B[isn0]
-          x_b <- x_b[isn0]
-          out_b <- PD.Tprofile(ai = x_b,Lis=Lis_b_tmp,q=q_int,
-                               cal = cal,nt = n)
-          LA_b <-  c(diff(times_AUC),0) %*% out_b %>% as.numeric()
-          RA_b <-   c(0,diff(times_AUC)) %*% out_b %>% as.numeric()
-          auc_b <- colMeans(rbind(LA_b,RA_b))
-          auc_b
-        }) %>% apply(., 1, sd)
-      }else{
-        ses <- rep(NA,length(auc))
-      }
-      output <- cbind(auc,auc-qtile*ses,auc+qtile*ses)
-      output[output[,2]<0,2] <- 0
-      output
-    }) %>% do.call(rbind,.)
-  }
-  
-  
-  AUC <- tibble(Order.q = rep(q_int,length(nms)), Empirical = AUC[,1],LCL = AUC[,2], UCL = AUC[,3],
-                Assemblage = rep(nms,each = length(q_int)))
-  AUC
-}
+#====Currently useless ======
+# AUC_one_table <- function(datalist, phylotr, knot, cal, datatype, nboot, conf, reft_max) {
+#   qtile <- qnorm(1-(1-conf)/2)
+#   times_AUC <- seq(0.01, reft_max, length.out = knot)
+#   nms <- names(datalist)
+#   q_int <- c(0, 1, 2)
+#   if(datatype=="abundance"){
+#     AUC <- lapply(1:length(datalist),function(i){
+#       aL <- phyBranchAL_Abu(phylo = phylotr,data = datalist[[i]],datatype,refT = times_AUC)
+#       x <- datalist[[i]] %>% .[.>0]
+#       n <- sum(x)
+#       emp <- PD.Tprofile(ai = aL$treeNabu$branch.abun,Lis=aL$BLbyT,
+#                          q=q_int,cal = cal, nt = n)
+#       # print(paste0("emp:",dim(emp)," AUC diff:",length(c(diff(times_AUC),0))))
+#       LA <-  c(diff(times_AUC),0) %*% emp %>% as.numeric()
+#       RA <-   c(0,diff(times_AUC)) %*% emp %>% as.numeric()
+#       auc <- colMeans(rbind(LA,RA))
+#       if(nboot!=0){
+#         Boots <- Boots.one(phylo = phylotr,aL = aL$treeNabu,datatype,nboot,reft = times_AUC, BLs = aL$BLbyT )
+#         Lis_b <- Boots$Li
+#         Lis_b <- sapply(1:length(times_AUC),function(l){
+#           tmp <- Lis_b[,l]
+#           tmp[tmp>times_AUC[l]] <- times_AUC[l]
+#           tmp
+#         })
+#         f0 <- Boots$f0
+#         tgroup_B <- c(rep("Tip",length(x)+f0),rep("Inode",nrow(Lis_b)-length(x)-f0))
+#         
+#         ses <- sapply(1:nboot, function(B){
+#           x_b <- Boots$boot_data[,B]
+#           isn0 <- as.vector(x_b>0)
+#           Lis_b_tmp <- Lis_b[isn0,]
+#           tgroup_B_tmp <- tgroup_B[isn0]
+#           x_b <- x_b[isn0]
+#           out_b <- PD.Tprofile(ai = x_b,Lis=Lis_b_tmp,q=q_int,cal = cal,nt = n)
+#           LA_b <-  c(diff(times_AUC),0) %*% out_b %>% as.numeric()
+#           RA_b <-   c(0,diff(times_AUC)) %*% out_b %>% as.numeric()
+#           auc_b <- colMeans(rbind(LA_b,RA_b))
+#           auc_b
+#         }) %>% apply(., 1, sd)
+#       }else{
+#         ses <- rep(NA,length(auc))
+#       }
+#       output <- cbind(auc,auc-qtile*ses,auc+qtile*ses)
+#       output[output[,2]<0,2] <- 0
+#       output
+#     }) %>% do.call(rbind,.)
+#   }else if (datatype=="incidence_raw"){
+#     AUC <- lapply(1:length(datalist), function(i){
+#       aL <- phyBranchAL_Inc(phylo = phylotr,data = datalist[[i]],datatype,refT = times_AUC)
+#       x <- datalist[[i]] %>% z[rowSums(.)>0,]
+#       n <- ncol(x)
+#       emp <- PD.Tprofile(ai = aL$treeNabu$branch.abun,Lis=aL$BLbyT,
+#                          q=q_int,cal = cal,nt = n)
+#       LA <-  c(diff(times_AUC),0) %*% emp %>% as.numeric()
+#       RA <-   c(0,diff(times_AUC)) %*% emp %>% as.numeric()
+#       auc <- colMeans(rbind(LA,RA))
+#       if(nboot!=0){
+#         Boots <- Boots.one(phylo = phylotr,aL = aL$treeNabu,datatype,nboot,reft = times_AUC,
+#                            BLs = aL$BLbyT,splunits = n)
+#         Lis_b <- Boots$Li
+#         Lis_b <- sapply(1:length(times_AUC),function(l){
+#           tmp <- Lis_b[,l]
+#           tmp[tmp>times_AUC[l]] <- times_AUC[l]
+#           tmp
+#         })
+#         f0 <- Boots$f0
+#         tgroup_B <- c(rep("Tip",nrow(x)+f0),rep("Inode",nrow(Lis_b)-nrow(x)-f0))
+#         ses <- sapply(1:nboot, function(B){
+#           x_b <- Boots$boot_data[,B]
+#           isn0 <- as.vector(x_b>0)
+#           Lis_b_tmp <- Lis_b[isn0,]
+#           tgroup_B_tmp <- tgroup_B[isn0]
+#           x_b <- x_b[isn0]
+#           out_b <- PD.Tprofile(ai = x_b,Lis=Lis_b_tmp,q=q_int,
+#                                cal = cal,nt = n)
+#           LA_b <-  c(diff(times_AUC),0) %*% out_b %>% as.numeric()
+#           RA_b <-   c(0,diff(times_AUC)) %*% out_b %>% as.numeric()
+#           auc_b <- colMeans(rbind(LA_b,RA_b))
+#           auc_b
+#         }) %>% apply(., 1, sd)
+#       }else{
+#         ses <- rep(NA,length(auc))
+#       }
+#       output <- cbind(auc,auc-qtile*ses,auc+qtile*ses)
+#       output[output[,2]<0,2] <- 0
+#       output
+#     }) %>% do.call(rbind,.)
+#   }
+#   
+#   
+#   AUC <- tibble(Order.q = rep(q_int,length(nms)), Empirical = AUC[,1],LCL = AUC[,2], UCL = AUC[,3],
+#                 Assemblage = rep(nms,each = length(q_int)))
+#   AUC
+# }
+#====Currently useless ======
 #=====old version=====
 # Plott <- function(out, cal, Q_Height){
 #   fort <- out
@@ -581,7 +590,8 @@ AsyPD <- function(datalist, datatype, phylotr, q,reft, cal,nboot, conf){#change 
   Estoutput <- do.call(rbind,Estoutput) %>%
     mutate(Assemblage = rep(names(datalist),each = length(q)*tau_l),Method = 'Asymptotic',
            Type=ifelse(cal=="PD", "PD", "meanPD")) %>%
-    select(Assemblage,Order.q,qPD,qPD.LCL, qPD.UCL, Reference.time,Method, Type) %>%
+    select(Assemblage,Order.q,qPD,qPD.LCL, qPD.UCL, 
+           Reference.time,Method, Type) %>%
     arrange(Reference.time)
   Estoutput$qPD.LCL[Estoutput$qPD.LCL<0] = 0
   return(Estoutput)
