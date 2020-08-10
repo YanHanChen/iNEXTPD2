@@ -21,7 +21,6 @@ Function \code{ggtqplotPD} plots time-profile (depicting phylogenetic diversity 
 \code{PhdObs} or \code{PhdAsy} using the \code{ggplot2} package.
 }
 \examples{
-\donttest{
 # Observed q-profile plot for abundance data
 data(data.abu)
 data <- data.abu$data
@@ -54,5 +53,5 @@ nT <- data.inc$nT
 out <- PhdAsy(data = data, datatype = "incidence_raw", nT = nT, tree = tree,
 q = c(0, 1, 2), reftime = seq(0.1, 82.8575, length.out = 40))
 ggtqplotPD(out, profile = "time")
-}
+
 }

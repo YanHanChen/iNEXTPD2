@@ -52,13 +52,12 @@ Function \code{PhdAsy} computes asymptotic phylogenetic diversity estimates with
 diversity order q and reference time to infer true phylogenetic diversity (PD) or phylogenetic Hill numbers (meanPD). See Chao et al. (2015) and Hsieh and Chao (2017) for the statistical estimation detail.
 }
 \examples{
-\donttest{
 # Datatype: abundance data
 data(data.abu)
 data <- data.abu$data
 tree <- data.abu$tree
 out <- PhdAsy(data = data, datatype = "abundance", tree = tree,
-q = seq(0, 2, by = 0.25))
+q = seq(0, 2, by = 0.25), nboot = 30)
 out
 
 # Datatype: incidence_raw data
@@ -69,7 +68,7 @@ nT <- data.inc$nT
 out <- PhdAsy(data = data, nT = nT, datatype = "incidence_raw",
 tree = tree, q = seq(0, 2, by = 0.25))
 out
-}
+
 }
 \references{
 Chao, A., Chiu, C.-H., Hsieh, T. C., Davis, T., Nipperess, D., and Faith, D. (2015). Rarefaction and extrapolation of phylogenetic diversity. \emph{Methods in Ecology and Evolution}, 6, 380-388.\cr\cr

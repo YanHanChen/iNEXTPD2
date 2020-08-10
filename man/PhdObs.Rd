@@ -52,7 +52,6 @@ numbers (meanPD, mean phylogenetic diversity) for specified/default order \code{
 time specified in the argument \code{reftime}. See Chao et al. (2010) for details of PD and meanPD.
 }
 \examples{
-\donttest{
 # Datatype: abundance data
 data(data.abu)
 data <- data.abu$data
@@ -69,7 +68,7 @@ nT <- data.inc$nT
 out <- PhdObs(data = data, nT = nT, datatype = "incidence_raw",
 tree = tree, q = seq(0, 2, by = 0.25))
 out
-}
+
 }
 \references{
 Chao, A., Chiu C.-H. and Jost, L. (2010). Phylogenetic diversity measures based on Hill numbers. \emph{Philosophical Transactions of the Royal Society B.}, 365, 3599-3609. \cr\cr

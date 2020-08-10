@@ -49,12 +49,11 @@
 #'  (if \code{nboot > 0}) and relevant statistics information.}
 #'  }
 #' @examples
-#' \donttest{
 #' # Datatype: abundance data
 #' data(data.abu)
 #' data <- data.abu$data
 #' tree <- data.abu$tree
-#' out <- iNEXTPD(data = data, tree = tree, datatype = "abundance", q = c(0, 1, 2))
+#' out <- iNEXTPD(data = data, tree = tree, datatype = "abundance", q = c(0, 1, 2), nboot = 10)
 #' out
 #'
 #' # Datatype: incidence_raw data
@@ -62,9 +61,9 @@
 #' data <- data.inc$data
 #' tree <- data.inc$tree
 #' nT <- data.inc$nT
-#' out <- iNEXTPD(data = data, nT = nT, datatype = "incidence_raw", tree = tree, q = c(0, 1, 2))
+#' out <- iNEXTPD(data = data, nT = nT, datatype = "incidence_raw", tree = tree, q = c(0, 1, 2), nboot = 30)
 #' out
-#' }
+#' 
 #' @references
 #' Chao, A., Chiu C.-H. and Jost, L. (2010). Phylogenetic diversity measures based on Hill numbers. \emph{Philosophical Transactions of the Royal Society B.}, 365, 3599-3609. \cr\cr
 #' Chao, A., Chiu, C.-H., Hsieh, T. C., Davis, T., Nipperess, D., and Faith, D. (2015). Rarefaction and extrapolation of phylogenetic diversity. \emph{Methods in Ecology and Evolution}, 6, 380-388.\cr\cr
@@ -249,13 +248,12 @@ iNEXTPD <- function(data,nT,datatype = "abundance",tree,q = c(0,1,2),reftime=NUL
 #' phylogenetic Hill numbers (\code{type = "meanPD"}) with respect to specified/default order \code{q} and
 #' reference time specified in the argument \code{reftime}.
 #' @examples
-#' \donttest{
 #' # Datatype: abundance data
 #' data(data.abu)
 #' data <- data.abu$data
 #' tree <- data.abu$tree
 #' out <- PhdAsy(data = data, datatype = "abundance", tree = tree,
-#' q = seq(0, 2, by = 0.25))
+#' q = seq(0, 2, by = 0.25), nboot = 30)
 #' out
 #'
 #' # Datatype: incidence_raw data
@@ -266,7 +264,7 @@ iNEXTPD <- function(data,nT,datatype = "abundance",tree,q = c(0,1,2),reftime=NUL
 #' out <- PhdAsy(data = data, nT = nT, datatype = "incidence_raw",
 #' tree = tree, q = seq(0, 2, by = 0.25))
 #' out
-#' }
+#' 
 #' @references
 #' Chao, A., Chiu, C.-H., Hsieh, T. C., Davis, T., Nipperess, D., and Faith, D. (2015). Rarefaction and extrapolation of phylogenetic diversity. \emph{Methods in Ecology and Evolution}, 6, 380-388.\cr\cr
 #' Hsieh, T. C. and Chao, A. (2017). Rarefaction and extrapolation: making fair comparison of abundance-sensitive phylogenetic diversity among multiple assemblages. \emph{Systematic Biology}, 66, 100-111.
@@ -367,7 +365,6 @@ PhdAsy <- function(data,nT,datatype = "abundance",tree,q = seq(0,2,by = 0.25),re
 #' @return Returns a table of empirical (observed) phylogenetic diversity (\code{type = "PD"}) or phylogenetic Hill number (\code{type= "meanPD"})
 #' for specified/default order q and reference time.
 #' @examples
-#' \donttest{
 #' # Datatype: abundance data
 #' data(data.abu)
 #' data <- data.abu$data
@@ -384,7 +381,7 @@ PhdAsy <- function(data,nT,datatype = "abundance",tree,q = seq(0,2,by = 0.25),re
 #' out <- PhdObs(data = data, nT = nT, datatype = "incidence_raw",
 #' tree = tree, q = seq(0, 2, by = 0.25))
 #' out
-#' }
+#' 
 #' @references
 #' Chao, A., Chiu C.-H. and Jost, L. (2010). Phylogenetic diversity measures based on Hill numbers. \emph{Philosophical Transactions of the Royal Society B.}, 365, 3599-3609. \cr\cr
 #' @export
@@ -538,7 +535,6 @@ PhdObs <- function(data,nT,datatype = "abundance",tree,q = seq(0, 2, by = 0.25),
 #' @return Returns a table of the computed phylogenetic diversity (PD or meanPD) for specified/default diversity orders \code{q} and reference times
 #' for the user-specified values of sample coverage. The corresponding sample sizes and sample coverage values are also provided.
 #' @examples
-#' \donttest{
 #' # Datatype: abundance data
 #' data(data.abu)
 #' data <- data.abu$data
@@ -553,7 +549,7 @@ PhdObs <- function(data,nT,datatype = "abundance",tree,q = seq(0, 2, by = 0.25),
 #' nT <- data.inc$nT
 #' out <- estimatePD(data = data, nT = nT, datatype = "incidence_raw", tree = tree)
 #' out
-#' }
+#' 
 #' @references
 #' Chao, A., Chiu C.-H. and Jost, L. (2010). Phylogenetic diversity measures based on Hill numbers. \emph{Philosophical Transactions of the Royal Society B.}, 365, 3599-3609. \cr\cr
 #' Chao, A., Chiu, C.-H., Hsieh, T. C., Davis, T., Nipperess, D., and Faith, D. (2015). Rarefaction and extrapolation of phylogenetic diversity. \emph{Methods in Ecology and Evolution}, 6, 380-388.\cr\cr
@@ -651,7 +647,6 @@ estimatePD <- function(data,nT,datatype = "abundance",tree,q = c(0,1,2),reftime=
 #' frequency counts and their branch length sums, at specified/default reference time specified in the argument \code{reftime}.
 #' See Chao et al. (2010, 2015) and Hsieh and Chao (2017) for formulas and interpretations.
 #' @examples
-#' \donttest{
 #' # Datatype: abundance data
 #' data(data.abu)
 #' data <- data.abu$data
@@ -666,7 +661,7 @@ estimatePD <- function(data,nT,datatype = "abundance",tree,q = c(0,1,2),reftime=
 #' nT <- data.inc$nT
 #' out <- PDInfo(data = data, nT = nT, datatype = "incidence_raw", tree = tree)
 #' out
-#' }
+#' 
 #' @references
 #' Chao, A., Chiu C.-H. and Jost, L. (2010). Phylogenetic diversity measures based on Hill numbers. \emph{Philosophical Transactions of the Royal Society B.}, 365, 3599-3609. \cr\cr
 #' Chao, A., Chiu, C.-H., Hsieh, T. C., Davis, T., Nipperess, D., and Faith, D. (2015). Rarefaction and extrapolation of phylogenetic diversity. \emph{Methods in Ecology and Evolution}, 6, 380-388.\cr\cr
@@ -748,12 +743,11 @@ PDInfo <- function(data,nT,datatype = "abundance", tree,reftime=NULL){
 #'  sample coverage.}
 #'  }
 #' @examples
-#' \donttest{
 #' # Datatype: abundance data
 #' data(data.abu)
 #' data <- data.abu$data
 #' tree <- data.abu$tree
-#' out <- iNEXTPD(data = data, tree = tree, datatype = "abundance", q = c(0, 1, 2))
+#' out <- iNEXTPD(data = data, tree = tree, datatype = "abundance", q = c(0, 1, 2), nboot = 10)
 #' ggiNEXTPD(out)
 #'
 #' # Datatype: incidence_raw data
@@ -761,9 +755,9 @@ PDInfo <- function(data,nT,datatype = "abundance", tree,reftime=NULL){
 #' data <- data.inc$data
 #' tree <- data.inc$tree
 #' nT <- data.inc$nT
-#' out <- iNEXTPD(data = data, nT = nT, datatype = "incidence_raw", tree = tree, q = c(0, 1, 2))
+#' out <- iNEXTPD(data = data, nT = nT, datatype = "incidence_raw", tree = tree, q = c(0, 1, 2), nboot = 30)
 #' ggiNEXTPD(out)
-#' }
+#' 
 #' @export
 ggiNEXTPD <- function(outcome,plot.type = 1:3){
   TYPE <- c(1,2,3)
@@ -785,7 +779,6 @@ ggiNEXTPD <- function(outcome,plot.type = 1:3){
 #' Default is \code{"q"}.
 #' @return plot of the PD or meanPD empirical or estimated asymptotic curves using the \code{ggplot2} package.
 #' @examples
-#' \donttest{
 #' # Observed q-profile plot for abundance data
 #' data(data.abu)
 #' data <- data.abu$data
@@ -818,7 +811,7 @@ ggiNEXTPD <- function(outcome,plot.type = 1:3){
 #' out <- PhdAsy(data = data, datatype = "incidence_raw", nT = nT, tree = tree,
 #' q = c(0, 1, 2), reftime = seq(0.1, 82.8575, length.out = 40))
 #' ggtqplotPD(out, profile = "time")
-#' }
+#' 
 #' @export
 ggtqplotPD <- function(outcome,profile = 'q'){
   if(profile=='q'){

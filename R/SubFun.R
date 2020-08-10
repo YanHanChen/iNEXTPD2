@@ -41,7 +41,7 @@ datainf <- function(data, datatype, phylotr,reft){
     }) %>% matrix(nrow = 3) %>% t()
     a1 <- tibble('T' = ncol(data),S.obs = nrow(data),PD.obs = a1[,1],
                  'Q1*' = f1,'Q2*' = f2, R1 = a1[,2],R2 = a1[,3])
-    names(a1) <- c("T", "S.obs", "PD.obs", "Q1*", "Q2*", "R1", "R2")
+    names(a1) <- c("nT", "S.obs", "PD.obs", "Q1*", "Q2*", "R1", "R2")
   }
   return(a1)
   
@@ -509,14 +509,14 @@ Plotq <- function(out){
       geom_ribbon(aes(ymin=qPD.LCL,ymax=qPD.UCL,fill=Reference.time),linetype = 0,alpha=0.2)
     #lai 1006
     p1 <-  p1 +xlab("Order q")+ylab(ylab_) + theme(text=element_text(size=20),legend.position="bottom",legend.key.width = unit(2,"cm"))+
-      geom_point(size=3, data=subset(forq, Order.q%in%q1), aes(x=Order.q, y=qPD, color=Reference.time))
+      geom_point(size=5, data=subset(forq, Order.q%in%q1), aes(x=Order.q, y=qPD, color=Reference.time))
   }else{
     p1 <- ggplot(forq, aes(x=Order.q, y=qPD, color=Assemblage, linetype=Assemblage)) + theme_bw() + geom_line(size=1.5)  +
       geom_ribbon(aes(ymin=qPD.LCL,ymax=qPD.UCL,fill=Assemblage),linetype = 0,alpha=0.2)+
       scale_color_manual(values = color_nogreen(length(unique(forq$Assemblage))))+
       scale_fill_manual(values = color_nogreen(length(unique(forq$Assemblage))))+
       theme(text=element_text(size=20),legend.position="bottom",legend.key.width = unit(2,"cm"))+
-      geom_point(size=3, data=subset(forq, Order.q%in%q1), aes(x=Order.q, y=qPD, color=Assemblage))+
+      geom_point(size=5, data=subset(forq, Order.q%in%q1), aes(x=Order.q, y=qPD, color=Assemblage, shape=Assemblage))+
       facet_wrap(~Reference.time, scales = "free")
     p1 <-  p1 +xlab("Order q")+ylab(ylab_)
   }
@@ -1240,7 +1240,7 @@ RE_plot = function(data, type){
   if(length(Assemblage) == 1){
     outp <- ggplot(output, aes(x = x, y = y))+ theme_bw() +
       geom_ribbon(aes(ymin = LCL, ymax = UCL),fill="#F8766D",alpha=0.2)+geom_line(size=1.5, aes(x = x, y = y, linetype=Method),color="#F8766D")+
-      geom_point(size=3, data=output_obser,color="#F8766D")+xlab(xlab_)+ylab(ylab_)+
+      geom_point(size=5, data=output_obser,color="#F8766D")+xlab(xlab_)+ylab(ylab_)+
       scale_linetype_manual(values = c("solid", "dashed"), name="Method",breaks=c("Rarefaction", "Extrapolation"), labels=c("Rarefaction", "Extrapolation"))+
       theme(text=element_text(size=20),legend.position="bottom",legend.key.width = unit(2,"cm"))+
       ggtitle(title)+guides(linetype=guide_legend(keywidth=2.5))
@@ -1253,7 +1253,7 @@ RE_plot = function(data, type){
       scale_color_manual(values = color_nogreen(length(unique(output$Assemblage))))+
       geom_ribbon(aes(ymin = LCL, ymax = UCL, fill = Assemblage), alpha=0.2, colour=NA)+
       scale_fill_manual(values = color_nogreen(length(unique(output$Assemblage))))+
-      geom_point(size=3, data=output_obser)+xlab(xlab_)+ylab(ylab_)+
+      geom_point(size=5, data=output_obser, aes(shape=Assemblage))+xlab(xlab_)+ylab(ylab_)+
       scale_linetype_manual(values = c("solid", "dashed"), name="Method",breaks=c("Rarefaction", "Extrapolation"), labels=c("Rarefaction", "Extrapolation"))+
       theme(text=element_text(size=20),legend.position="bottom",legend.key.width = unit(2,"cm"))+
       ggtitle(title)+guides(linetype=guide_legend(keywidth=2.5))
@@ -1343,11 +1343,11 @@ invChatPD <- function(datalist, datatype,phylotr, q, reft, cal,level, nboot, con
   out <- out %>% mutate(Assemblage = Assemblage,
                         Type=ifelse(cal=="PD", "PD", "meanPD"))
   if(datatype=='abundance'){
-    out <- out %>% select(Assemblage,m,Method,Order.q,qPD,qPD.LCL,qPD.UCL,
-                          SC,goalSC,Reference.time,Type) %>% arrange(Reference.time,goalSC,Order.q)
+    out <- out %>% select(Assemblage,goalSC,SC,m,Method,Order.q,qPD,qPD.LCL,qPD.UCL,
+                          Reference.time,Type) %>% arrange(Reference.time,goalSC,Order.q)
   }else if(datatype=='incidence_raw'){
-    out <- out %>% select(Assemblage,nt,Method,Order.q,qPD,qPD.LCL,qPD.UCL,
-                          SC,goalSC,Reference.time,Type) %>% arrange(Reference.time,goalSC,Order.q)
+    out <- out %>% select(Assemblage,goalSC,SC,nt,Method,Order.q,qPD,qPD.LCL,qPD.UCL,
+                          Reference.time,Type) %>% arrange(Reference.time,goalSC,Order.q)
   }
   out$qPD.LCL[out$qPD.LCL<0] <- 0
   rownames(out) <- NULL

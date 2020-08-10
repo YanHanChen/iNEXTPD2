@@ -28,12 +28,11 @@ Returns different plots of the estimated diversity curves based on the \code{ggp
 Function \code{ggiNEXTPD} plots the outcome of \code{iNEXTPD} using the \code{ggplot2} package.
 }
 \examples{
-\donttest{
 # Datatype: abundance data
 data(data.abu)
 data <- data.abu$data
 tree <- data.abu$tree
-out <- iNEXTPD(data = data, tree = tree, datatype = "abundance", q = c(0, 1, 2))
+out <- iNEXTPD(data = data, tree = tree, datatype = "abundance", q = c(0, 1, 2), nboot = 10)
 ggiNEXTPD(out)
 
 # Datatype: incidence_raw data
@@ -41,7 +40,7 @@ data(data.inc)
 data <- data.inc$data
 tree <- data.inc$tree
 nT <- data.inc$nT
-out <- iNEXTPD(data = data, nT = nT, datatype = "incidence_raw", tree = tree, q = c(0, 1, 2))
+out <- iNEXTPD(data = data, nT = nT, datatype = "incidence_raw", tree = tree, q = c(0, 1, 2), nboot = 30)
 ggiNEXTPD(out)
-}
+
 }

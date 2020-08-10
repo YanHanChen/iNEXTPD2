@@ -32,7 +32,6 @@ See Chao et al. (2010, 2015) and Hsieh and Chao (2017) for formulas and interpre
 Function \code{PDInfo} summarizes phylogenetic data statistics for specified/default reference time.
 }
 \examples{
-\donttest{
 # Datatype: abundance data
 data(data.abu)
 data <- data.abu$data
@@ -47,7 +46,7 @@ tree <- data.inc$tree
 nT <- data.inc$nT
 out <- PDInfo(data = data, nT = nT, datatype = "incidence_raw", tree = tree)
 out
-}
+
 }
 \references{
 Chao, A., Chiu C.-H. and Jost, L. (2010). Phylogenetic diversity measures based on Hill numbers. \emph{Philosophical Transactions of the Royal Society B.}, 365, 3599-3609. \cr\cr
