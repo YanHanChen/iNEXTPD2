@@ -1255,7 +1255,7 @@ RE_plot = function(data, type){
       scale_fill_manual(values = color_nogreen(length(unique(output$Assemblage))))+
       geom_point(size=5, data=output_obser, aes(shape=Assemblage))+xlab(xlab_)+ylab(ylab_)+
       scale_linetype_manual(values = c("solid", "22"), name="Method",breaks=c("Rarefaction", "Extrapolation"), labels=c("Rarefaction", "Extrapolation"))+
-      theme(text=element_text(size=20),legend.position="bottom",legend.key.width = unit(2,"cm"))+
+      theme(text=element_text(size=20),legend.position="bottom",legend.key.width = unit(2,"cm"),legend.box = "vertical")+
       ggtitle(title)+guides(linetype=guide_legend(keywidth=2.5))
     if(type!=2)  outp <- outp + facet_wrap(Reference.time~Order.q,scales = "free_y",labeller=mylab)
     else if (type == 2) outp <- outp + facet_wrap(~Reference.time,scales = "free_y")
