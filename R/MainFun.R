@@ -718,7 +718,7 @@ PDInfo <- function(data,nT,datatype = "abundance", tree,reftime=NULL){
     infos <- lapply(mydata, function(x){
       datainf(data = x, datatype, phylotr = mytree,reft = reftime) %>% mutate(Reference.time = reftime)
     }) %>% do.call(rbind,.) %>% mutate(Assemblage = rep(names(mydata),each = length(reftime))) %>%
-      select(Assemblage,`T`,S.obs,PD.obs,`Q1*`,`Q2*`,R1,R2,Reference.time)
+      select(Assemblage,`nT`,S.obs,PD.obs,`Q1*`,`Q2*`,R1,R2,Reference.time)
   }
   
   return(infos)

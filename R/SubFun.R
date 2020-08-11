@@ -516,7 +516,7 @@ Plotq <- function(out){
       scale_color_manual(values = color_nogreen(length(unique(forq$Assemblage))))+
       scale_fill_manual(values = color_nogreen(length(unique(forq$Assemblage))))+
       theme(text=element_text(size=20),legend.position="bottom",legend.key.width = unit(2,"cm"))+
-      geom_point(size=5, data=subset(forq, Order.q%in%q1), aes(x=Order.q, y=qPD, color=Assemblage, shape=Assemblage))+
+      geom_point(size=5, data=subset(forq, Order.q%in%q1), aes(x=Order.q, y=qPD, color=Assemblage))+
       facet_wrap(~Reference.time, scales = "free")
     p1 <-  p1 +xlab("Order q")+ylab(ylab_)
   }
