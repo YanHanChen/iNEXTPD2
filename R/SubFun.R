@@ -1241,7 +1241,7 @@ RE_plot = function(data, type){
     outp <- ggplot(output, aes(x = x, y = y))+ theme_bw() +
       geom_ribbon(aes(ymin = LCL, ymax = UCL),fill="#F8766D",alpha=0.2)+geom_line(size=1.5, aes(x = x, y = y, linetype=Method),color="#F8766D")+
       geom_point(size=5, data=output_obser,color="#F8766D")+xlab(xlab_)+ylab(ylab_)+
-      scale_linetype_manual(values = c("solid", "dashed"), name="Method",breaks=c("Rarefaction", "Extrapolation"), labels=c("Rarefaction", "Extrapolation"))+
+      scale_linetype_manual(values = c("solid", "22"), name="Method",breaks=c("Rarefaction", "Extrapolation"), labels=c("Rarefaction", "Extrapolation"))+
       theme(text=element_text(size=20),legend.position="bottom",legend.key.width = unit(2,"cm"))+
       ggtitle(title)+guides(linetype=guide_legend(keywidth=2.5))
     if(type!=3) outp <- outp + facet_wrap(Reference.time~Order.q,scales = "free_y",labeller=mylab)
