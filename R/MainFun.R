@@ -127,9 +127,9 @@ iNEXTPD <- function(data,nT,datatype = "abundance",tree,q = c(0,1,2),reftime=NUL
   #atime <- Sys.time()
   # if(class(mydata) == "list"){
   #   infos <- lapply(mydata, function(x){
-  #     datainf(data = x, datatype, phylotr = mytree,reft = reft) %>% mutate(Reference.time = reft)
+  #     datainf(data = x, datatype, phylotr = mytree,reft = reft) %>% mutate(Reftime = reft)
   #     }) %>% do.call(rbind,.) %>% mutate(Assemblage = rep(names(mydata),each = length(reft))) %>%
-  #     select(Assemblage,n,S.obs,PD.obs,`f1*`,`f2*`,g1,g2,Reference.time)
+  #     select(Assemblage,n,S.obs,PD.obs,`f1*`,`f2*`,g1,g2,Reftime)
   # }else{
   #   return(NULL)
   # }
@@ -712,14 +712,14 @@ PDInfo <- function(data,nT,datatype = "abundance", tree,reftime=NULL){
   
   if(datatype=='abundance'){
     infos <- lapply(mydata, function(x){
-      datainf(data = x, datatype, phylotr = mytree,reft = reftime) %>% mutate(Reference.time = reftime)
+      datainf(data = x, datatype, phylotr = mytree,reft = reftime) %>% mutate(Reftime = reftime)
     }) %>% do.call(rbind,.) %>% mutate(Assemblage = rep(names(mydata),each = length(reftime))) %>%
-      select(Assemblage,n,S.obs,PD.obs,`f1*`,`f2*`,g1,g2,Reference.time)
+      select(Assemblage,n,S.obs,PD.obs,`f1*`,`f2*`,g1,g2,Reftime)
   }else if (datatype=='incidence_raw'){
     infos <- lapply(mydata, function(x){
-      datainf(data = x, datatype, phylotr = mytree,reft = reftime) %>% mutate(Reference.time = reftime)
+      datainf(data = x, datatype, phylotr = mytree,reft = reftime) %>% mutate(Reftime = reftime)
     }) %>% do.call(rbind,.) %>% mutate(Assemblage = rep(names(mydata),each = length(reftime))) %>%
-      select(Assemblage,`nT`,S.obs,PD.obs,`Q1*`,`Q2*`,R1,R2,Reference.time)
+      select(Assemblage,`nT`,S.obs,PD.obs,`Q1*`,`Q2*`,R1,R2,Reftime)
   }
   
   return(infos)
