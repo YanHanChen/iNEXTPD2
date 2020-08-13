@@ -56,7 +56,6 @@ numbers or the effective number of lineages, q = 0, 1 and 2) at specified values
 Use the function \code{iNEXTPD} to compute PD or meanPD for specified sample sizes.
 }
 \examples{
-\donttest{
 # Datatype: abundance data
 data(data.abu)
 data <- data.abu$data
@@ -71,7 +70,7 @@ tree <- data.inc$tree
 nT <- data.inc$nT
 out <- estimatePD(data = data, nT = nT, datatype = "incidence_raw", tree = tree)
 out
-}
+
 }
 \references{
 Chao, A., Chiu C.-H. and Jost, L. (2010). Phylogenetic diversity measures based on Hill numbers. \emph{Philosophical Transactions of the Royal Society B.}, 365, 3599-3609. \cr\cr
