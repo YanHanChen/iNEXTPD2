@@ -1357,11 +1357,13 @@ invChatPD <- function(datalist, datatype,phylotr, q, reft, cal,level, nboot, con
       if(nboot>1){
         Boots <- Boots.one(phylo = phylotr,aL$treeNabu,datatype,nboot,reft,aL$BLbyT,n)
         Li_b <- Boots$Li
+        refinfo <- colnames(Li_b)
         Li_b <- sapply(1:length(reft),function(l){
           tmp <- Li_b[,l]
           tmp[tmp>reft[l]] <- reft[l]
           tmp
         })
+        colnames(Li_b) <- refinfo
         f0 <- Boots$f0
         tgroup_B <- c(rep("Tip",length(x_)+f0),rep("Inode",nrow(Li_b)-length(x_)-f0))
         #aL_table_b <- tibble(branch.abun = 0, branch.length= Li_b[,1],tgroup = tgroup_B)
@@ -1395,11 +1397,13 @@ invChatPD <- function(datalist, datatype,phylotr, q, reft, cal,level, nboot, con
       if(nboot>1){
         Boots <- Boots.one(phylo = phylotr,aL$treeNabu,datatype,nboot,reft,aL$BLbyT,n)
         Li_b <- Boots$Li
+        refinfo <- colnames(Li_b)
         Li_b <- sapply(1:length(reft),function(l){
           tmp <- Li_b[,l]
           tmp[tmp>reft[l]] <- reft[l]
           tmp
         })
+        colnames(Li_b) <- refinfo
         f0 <- Boots$f0
         tgroup_B <- c(rep("Tip",nrow(x_)+f0),rep("Inode",nrow(Li_b)-nrow(x_)-f0))
         #aL_table_b <- tibble(branch.abun = 0, branch.length= Li_b[,1],tgroup = tgroup_B)
