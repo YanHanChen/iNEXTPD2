@@ -1617,6 +1617,8 @@ invChatPD_inc <- function(x,ai,Lis, q, Cs, n,cal){ # x is a matrix
 
 
 #====Sub Functions: when reftime < the age of first divergence======
+
+#' @importFrom stats rmultinom
 TD.Tprofile <- function(x,q, datatype="abundance",nboot=50, conf=0.95,cal,reft_taxo){
   qtile <- qnorm(1-(1-conf)/2)
   if(cal=='meanPD') reft_taxo <- rep(1,length(reft_taxo))
