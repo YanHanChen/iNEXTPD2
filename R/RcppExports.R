@@ -41,3 +41,7 @@ ghat_pt2 <- function(ai, n, mmax) {
     .Call('_iNEXTPD2_ghat_pt2', PACKAGE = 'iNEXTPD2', ai, n, mmax)
 }
 
+qD_MLE <- function(q, ai) {
+    .Call('_iNEXTPD2_qD_MLE', PACKAGE = 'iNEXTPD2', q, ai)
+}
+

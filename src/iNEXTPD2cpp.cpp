@@ -4,7 +4,7 @@ using namespace Rcpp;
 // [[Rcpp::export]]
 double Dq0(double n, double f1, double f2, double g1,  double g2) {
   double ans;
-  if(f1+f2 == 0) {ans = 0;
+  if(f1 == 0) {ans = 0;
   } else if ( ((g1*f2)/(2*f1) < g2) | (f1==0)){
     ans = ((n-1)/n)*(pow(g1,2)/(2*g2));
   } else{
@@ -233,4 +233,19 @@ NumericMatrix ghat_pt2(NumericVector ai , int n , int mmax ) {
     }
   }
   return out ;
+}
+
+// [[Rcpp::export]]
+NumericVector qD_MLE(NumericVector q,NumericVector ai){
+  const int length = q.size();
+  const int S = ai.size();
+  NumericVector Q(length);
+  NumericVector temp(S);
+  for(int j = 0; j<length;j++){
+    for(int i = 0 ; i<S;i++){
+      temp[i] = pow(ai[i],q[j]);
+    }
+    Q[j] = pow(sum(temp),1/(1-q[j]));
+  }
+  return Q;
 }

@@ -13,116 +13,37 @@ datainf <- function(data, datatype, phylotr,reft){
     data <- data[data>0]
     ai <- new$treeNabu$branch.abun
     Lis <- new$BLbyT
-    I1 <- which(ai==1);I2 <- which(ai==2)
-    f1 <- length(I1);f2 <- length(I2)
     a1 <- sapply(1:ncol(Lis),function(i){
       Li = Lis[,i]
+      I1 <- which(ai==1&Li>0);I2 <- which(ai==2&Li>0)
+      f1 <- length(I1);f2 <- length(I2)
       PD_obs <- sum(Li)
       g1 <- sum(Li[I1])
       g2 <- sum(Li[I2])
-      c(PD_obs,g1,g2)
-    }) %>% matrix(nrow = 3) %>% t()
-    a1 <- tibble(n = sum(data),S.obs = length(data),PD.obs = a1[,1],
-                 'f1*' = f1,'f2*' = f2, g1 = a1[,2],g2 = a1[,3])
+      c(f1,f2,PD_obs,g1,g2)
+    }) %>% matrix(nrow = 5) %>% t()
+    a1 <- tibble('n' = sum(data),'S.obs' = length(data),'PD.obs' = a1[,3],
+                 'f1*' = a1[,1],'f2*' = a1[,2], 'g1' = a1[,4],'g2' = a1[,5])
   }else if(datatype == 'incidence_raw'){
     new <- phyBranchAL_Inc(phylotr,data,datatype,reft)
     #new$treeNabu$branch.length <- new$BLbyT[,1]
     data <- data[rowSums(data)>0,colSums(data)>0,drop=F]
     ai <- new$treeNabu$branch.abun
     Lis <- new$BLbyT
-    I1 <- which(ai==1);I2 <- which(ai==2)
-    f1 <- length(I1);f2 <- length(I2)
     a1 <- sapply(1:ncol(Lis),function(i){
       Li = Lis[,i]
+      I1 <- which(ai==1);I2 <- which(ai==2)
+      f1 <- length(I1);f2 <- length(I2)
       PD_obs <- sum(Li)
       g1 <- sum(Li[I1])
       g2 <- sum(Li[I2])
-      c('PD.obs' = PD_obs, 'g1' = g1, "g2" = g2)
-    }) %>% matrix(nrow = 3) %>% t()
-    a1 <- tibble('T' = ncol(data),S.obs = nrow(data),PD.obs = a1[,1],
-                 'Q1*' = f1,'Q2*' = f2, R1 = a1[,2],R2 = a1[,3])
-    names(a1) <- c("nT", "S.obs", "PD.obs", "Q1*", "Q2*", "R1", "R2")
+      c(f1,f2,PD_obs, g1, g2)
+    }) %>% matrix(nrow = 5) %>% t()
+    a1 <- tibble('nT' = ncol(data),'S.obs' = nrow(data),'PD.obs' = a1[,3],
+                 'Q1*' = a1[,1],'Q2*' = a1[,2], 'R1' = a1[,4],'R2' = a1[,5])
   }
   return(a1)
   
-}
-PD.qprofile=function(aL, q, cal, nt) {
-  #aL is a table of 3 columns: abundance, branch lengths and characters specifying the group of each node.
-  Abun <- unlist(aL[,1])
-  bL <- unlist(aL[,2])
-  t_bar <- sum(Abun / nt * bL)
-  
-  Sub = function(q) {
-    PD=ifelse(q==1, exp(-sum(bL*Abun/t_bar/nt*log(Abun/t_bar/nt)) ),
-              sum(bL*(Abun/t_bar/nt)^q)^(1/(1-q)))
-    ifelse(cal=="PD",PD,PD/t_bar)
-  }
-  sapply(q, Sub)
-}
-Phdqtable <- function(datalist, phylotr, q, cal, datatype, nboot, conf, reft){
-  qtile <- qnorm(1-(1-conf)/2)
-  # all assemblages.
-  nms <- names(datalist)
-  if(datatype=="abundance"){
-    out <- lapply(1:length(datalist), function(i){
-      aL <- phyBranchAL_Abu(phylo = phylotr,data = datalist[[i]],datatype,refT = reft)
-      x <- datalist[[i]]
-      x <- x[x>0]
-      n <- sum(x)
-      emp <- c(t(PD.Tprofile(ai = aL$treeNabu$branch.abun,Lis=aL$BLbyT, q=q,cal = cal,nt = n)))
-      if(nboot>0){
-        Boots <- Boots.one(phylo = phylotr,aL = aL$treeNabu,datatype,nboot,reft = reft, BLs = aL$BLbyT )
-        Li_b <- sapply(1:length(reft), function(reft_){
-          Li_b <- Boots$Li[,reft_]
-          Li_b[Li_b>reft[reft_]] <- reft[reft_]
-          Li_b
-        })
-        Li_b <- matrix(Li_b,ncol=ncol(aL$BLbyT))
-        ses <- sapply(1:nboot,function(B){
-          c(t(PD.Tprofile(ai = Boots$boot_data[,B],Lis = Li_b, q=q,cal = cal,nt = n)))
-        }) %>% apply(., 1, sd)
-      }else{
-        ses <- rep(NA,length(emp))
-      }
-      output <- cbind(emp,emp-qtile*ses,emp+qtile*ses)
-      output[output[,2]<0,2] <- 0
-      output
-    }) %>% do.call(rbind,.)
-  }else if(datatype=="incidence_raw"){
-    out <- lapply(1:length(datalist), function(i){
-      aL <- phyBranchAL_Inc(phylo = phylotr,data = datalist[[i]],datatype,refT = reft)
-      x <- datalist[[i]]
-      x <- x[rowSums(x)>0,colSums(x)>0]
-      n <- ncol(x)
-      # For incidence type, we use occurence frequencies instead of raw data since we already have aL table.
-      emp <- c(t(PD.Tprofile(ai = aL$treeNabu$branch.abun,Lis=aL$BLbyT, q=q,cal = cal,nt = n)))
-      if(nboot!=0){
-        Boots <- Boots.one(phylo = phylotr,aL = aL$treeNabu,datatype,nboot,reft = reft, BLs = aL$BLbyT,splunits = n)
-        Li_b <- sapply(1:length(reft), function(reft_){
-          Li_b <- Boots$Li[,reft_]
-          Li_b[Li_b>reft[reft_]] <- reft[reft_]
-          Li_b
-        })
-        Li_b <- matrix(Li_b,ncol=ncol(aL$BLbyT))
-        ses <- sapply(1:nboot,function(B){
-          c(t(PD.Tprofile(ai = Boots$boot_data[,B],Lis = Li_b, q=q,cal = cal,nt = n)))
-        }) %>% apply(., 1, sd)
-      }else{
-        ses <- rep(NA,length(emp))
-      }
-      output <- cbind(emp,emp-qtile*ses,emp+qtile*ses)
-      output[output[,2]<0,2] <- 0
-      output
-    }) %>% do.call(rbind,.)
-  }
-  
-  odr <- rep(q,length(reft)*length(nms))
-  reftime <- rep(rep(reft,each = length(q)),length(nms))
-  nms_tmp <- rep(nms,each = length(q)*length(reft))
-  Outputforq <- tibble(Order.q = odr, Empirical = out[,1],LCL = out[,2], UCL = out[,3],
-                       reftime = reftime,Assemblage = nms_tmp)
-  Outputforq <- Outputforq %>% mutate (method = ifelse(cal=="PD", "PD", "meanPD"))
-  return(Outputforq)
 }
 color_nogreen <- function(n) {
   all <- c("red", "blue", "orange", "purple", "pink", "cyan", "brown", "yellow")
@@ -149,104 +70,6 @@ PD.Tprofile=function(ai,Lis, q, cal, nt) {
     }) %>% matrix(.,ncol = length(t_bars)) %>% t()
   }
   out
-}
-Phdttable <- function(datalist, phylotr, times, cal, datatype, nboot, conf){
-  # Note 200117: currently, the reference time is automatically fixed at tree height of pooled species.
-  qtile <- qnorm(1-(1-conf)/2)
-  # all assemblages.
-  if (datatype=="incidence_raw") {
-    H_max <- get.rooted.tree.height(phylotr)
-    da <- lapply(datalist, rowSums) %>% do.call(cbind, .) %>% rowSums()
-  }
-  if (datatype=="abundance") {
-    H_max <- get.rooted.tree.height(phylotr)
-    da <- do.call(cbind, datalist) %>% rowSums()
-  }
-  # if(abs(H_max - reft)<=1e-4) H_max <- reft
-  # Note 200204: currently, to compute Q, we treat incidence data as abundance and absolutely pool
-  aL <- phyBranchAL_Abu(phylo = phylotr,data = da,"abundance",refT = H_max)$treeNabu %>%
-    select(branch.abun,branch.length,tgroup)
-  PD2 <- PD.qprofile(aL,q = 2, cal =  "PD",nt = sum(da))
-  Q <- H_max-(H_max^2)/PD2
-  nms <- names(datalist)
-  
-  q_int <- c(0, 1, 2)
-  if(datatype=="abundance"){
-    out <- lapply(1:length(datalist), function(i){
-      aL <- phyBranchAL_Abu(phylo = phylotr,data = datalist[[i]],datatype,refT = times)
-      x <- datalist[[i]] %>% .[.>0]
-      n <- sum(x)
-      emp <- PD.Tprofile(ai = aL$treeNabu$branch.abun,Lis=aL$BLbyT, q=q_int,cal = cal,nt = n) %>%
-        c()
-      
-      if(nboot!=0){
-        Boots <- Boots.one(phylo = phylotr,aL = aL$treeNabu,datatype,nboot,reft = times, BLs = aL$BLbyT )
-        Lis_b <- Boots$Li
-        Lis_b <- sapply(1:length(times),function(l){
-          tmp <- Lis_b[,l]
-          tmp[tmp>times[l]] <- times[l]
-          tmp
-        })
-        f0 <- Boots$f0
-        #tgroup_B <- c(rep("Tip",length(x)+f0),rep("Inode",nrow(Lis_b)-length(x)-f0))
-        ses <- sapply(1:nboot, function(B){
-          x_b <- Boots$boot_data[,B]
-          isn0 <- as.vector(x_b>0)
-          Lis_b_tmp <- Lis_b[isn0,]
-          #tgroup_B_tmp <- tgroup_B[isn0]
-          x_b <- x_b[isn0]
-          out_b <- PD.Tprofile(ai = x_b,Lis=Lis_b_tmp,q=q_int,cal = cal, nt = n) %>% c()
-          out_b
-        }) %>% apply(., 1, sd)
-      }else{
-        ses <- rep(NA,length(emp))
-      }
-      output <- cbind(emp,emp-qtile*ses,emp+qtile*ses)
-      output[output[,2]<0,2] <- 0
-      output
-    }) %>% do.call(rbind,.)
-  }else if(datatype=="incidence_raw"){
-    out <- lapply(1:length(datalist), function(i){
-      aL <- phyBranchAL_Inc(phylo = phylotr,data = datalist[[i]],datatype,refT = times)
-      x <- datalist[[i]] %>% .[rowSums(.)>0,]
-      n <- ncol(x)
-      emp <- PD.Tprofile(ai = aL$treeNabu$branch.abun,Lis=aL$BLbyT,q=q_int,cal = cal,nt = n) %>%
-        c()
-      
-      if(nboot!=0){
-        Boots <- Boots.one(phylo = phylotr,aL = aL$treeNabu,datatype,nboot,reft = times,
-                           BLs = aL$BLbyT,splunits = n)
-        Lis_b <- Boots$Li
-        Lis_b <- sapply(1:length(times),function(l){
-          tmp <- Lis_b[,l]
-          tmp[tmp>times[l]] <- times[l]
-          tmp
-        })
-        f0 <- Boots$f0
-        ses <- sapply(1:nboot, function(B){
-          x_b <- Boots$boot_data[,B]
-          isn0 <- as.vector(x_b>0)
-          Lis_b_tmp <- Lis_b[isn0,]
-          x_b <- x_b[isn0]
-          out_b <- PD.Tprofile(ai = x_b,Lis=Lis_b_tmp,q=q_int,cal = cal,nt = n) %>% c()
-          out_b
-        }) %>% apply(., 1, sd)
-      }else{
-        ses <- rep(NA,length(emp))
-      }
-      output <- cbind(emp,emp-qtile*ses,emp+qtile*ses)
-      output[output[,2]<0,2] <- 0
-      output
-    }) %>% do.call(rbind,.)
-  }
-  
-  Outputfort <- tibble(time = rep(times,length(q_int)*length(datalist)),
-                       Empirical = out[,1],LCL = out[,2], UCL = out[,3],
-                       Order.q = rep(rep(q_int, each=length(times)),length(datalist)),
-                       Assemblage = rep(nms, each=length(times)*length(q_int)),
-                       method=ifelse(cal=="PD", "PD", "meanPD"))
-  out = list(fort = Outputfort, Q_Height=c(Q, H_max))
-  return(out)
 }
 EmpPD <- function(datalist,datatype, phylotr, q, reft, cal, nboot, conf){
   nms <- names(datalist)
@@ -322,6 +145,292 @@ EmpPD <- function(datalist,datatype, phylotr, q, reft, cal, nboot, conf){
     arrange(Reftime)
   return(Output)
 }
+EmpPD2 <- function(datalist,datatype, phylotr, q, reft, cal, nboot, conf){
+  nms <- names(datalist)
+  qtile <- qnorm(1-(1-conf)/2)
+  reft_complete <- reft
+  if(datatype=="abundance"){
+    out <- lapply(1:length(datalist), function(i){
+      aL <- phyBranchAL_Abu(phylo = phylotr,data = datalist[[i]],datatype,refT = reft)
+      x <- datalist[[i]] %>% .[.>0]
+      #divide reference time into two parts.
+      first_parent <- aL$treeNabu %>% filter(tgroup=='Tip') %>% select(branch.length) %>% min
+      reft_taxo <- reft[reft <= first_parent]
+      reft <- reft[reft > first_parent]
+      if(length(reft_taxo)>0) {
+        aL$BLbyT <- aL$BLbyT[,-(1:length(reft_taxo))]
+        ans_taxo <- TD.Tprofile(x=x,q=q,datatype=datatype,nboot=nboot,conf=conf,cal=cal,reft_taxo=reft_taxo)
+        ans_taxo <- tibble(qPD = ans_taxo[,1],qPD.LCL = ans_taxo[,2], qPD.UCL = ans_taxo[,3],
+                           Order.q = rep(q, each=length(reft_taxo)),Reftime = rep(reft_taxo,length(q)))
+      }
+      
+      n <- sum(x)
+      emp <- PD.Tprofile(ai = aL$treeNabu$branch.abun,Lis=aL$BLbyT, q=q,cal = cal,nt = n) %>%
+        c()
+      
+      if(nboot!=0){
+        Boots <- Boots.one(phylo = phylotr,aL = aL$treeNabu,datatype,nboot,reft = reft, BLs = aL$BLbyT )
+        Li_b <- Boots$Li
+        Li_b <- sapply(1:length(reft),function(l){
+          tmp <- Li_b[,l]
+          tmp[tmp>reft[l]] <- reft[l]
+          tmp
+        })
+        f0 <- Boots$f0
+        ses <- sapply(1:nboot, function(B){
+          ai_B <- Boots$boot_data[,B]
+          isn0 <- ai_B>0
+          out_b <- PD.Tprofile(ai = ai_B[isn0],Lis = Li_b[isn0,,drop=F],q=q,cal = cal, nt = n) %>% c()
+          out_b
+        }) %>% apply(., 1, sd)
+      }else{
+        ses <- rep(NA,length(emp))
+      }
+      output <- cbind(emp,emp-qtile*ses,emp+qtile*ses)
+      output <- tibble(qPD = output[,1],qPD.LCL = output[,2], qPD.UCL = output[,3],
+                       Order.q = rep(q, each=length(reft)),Reftime = rep(reft,length(q)))
+      if(length(reft_taxo)>0) {
+        output <- rbind(ans_taxo,output) %>% 
+          arrange(Order.q,Reftime) %>% select(qPD,qPD.LCL,qPD.UCL) %>% as.matrix()
+      }
+      output[output[,2]<0,2] <- 0
+      output
+    }) %>% do.call(rbind,.)
+  }else if(datatype=="incidence_raw"){
+    out <- lapply(1:length(datalist), function(i){
+      aL <- phyBranchAL_Inc(phylo = phylotr,data = datalist[[i]],datatype,refT = reft)
+      x <- datalist[[i]] %>% .[rowSums(.)>0,]
+      #divide reference time into two parts.
+      first_parent <- aL$treeNabu %>% filter(tgroup=='Tip') %>% select(branch.length) %>% min
+      reft_taxo <- reft[reft <= first_parent]
+      reft <- reft[reft > first_parent]
+      if(length(reft_taxo)>0) {
+        aL$BLbyT <- aL$BLbyT[,-(1:length(reft_taxo))]
+        ans_taxo <- TD.Tprofile(x=x,q=q,datatype=datatype,nboot=nboot,conf=conf,cal=cal,reft_taxo=reft_taxo)
+        ans_taxo <- tibble(qPD = ans_taxo[,1],qPD.LCL = ans_taxo[,2], qPD.UCL = ans_taxo[,3],
+                           Order.q = rep(q, each=length(reft_taxo)),Reftime = rep(reft_taxo,length(q)))
+      }
+      
+      n <- ncol(x)
+      emp <- PD.Tprofile(ai = aL$treeNabu$branch.abun,Lis=aL$BLbyT,q=q,cal = cal,nt = n) %>%
+        c()
+      
+      if(nboot!=0){
+        Boots <- Boots.one(phylo = phylotr,aL = aL$treeNabu,datatype,nboot,reft = reft,
+                           BLs = aL$BLbyT,splunits = n)
+        Li_b <- Boots$Li
+        Li_b <- sapply(1:length(reft),function(l){
+          tmp <- Li_b[,l]
+          tmp[tmp>reft[l]] <- reft[l]
+          tmp
+        })
+        f0 <- Boots$f0
+        ses <- sapply(1:nboot, function(B){
+          ai_B <- Boots$boot_data[,B]
+          isn0 <- ai_B>0
+          out_b <- PD.Tprofile(ai = ai_B[isn0],Lis = Li_b[isn0,,drop=F],q=q,cal = cal,nt = n) %>% c()
+          out_b
+        }) %>% apply(., 1, sd)
+      }else{
+        ses <- rep(NA,length(emp))
+      }
+      output <- cbind(emp,emp-qtile*ses,emp+qtile*ses)
+      output <- tibble(qPD = output[,1],qPD.LCL = output[,2], qPD.UCL = output[,3],
+                       Order.q = rep(q, each=length(reft)),Reftime = rep(reft,length(q)))
+      if(length(reft_taxo)>0) {
+        output <- rbind(ans_taxo,output) %>% 
+          arrange(Order.q,Reftime) %>% select(qPD,qPD.LCL,qPD.UCL) %>% as.matrix()
+      }
+      output[output[,2]<0,2] <- 0
+      output
+    }) %>% do.call(rbind,.)
+  }
+  Output <- tibble(Assemblage = rep(nms, each=length(reft_complete)*length(q)),
+                   Order.q = rep(rep(q, each=length(reft_complete)),length(datalist)),
+                   qPD = out[,1],qPD.LCL = out[,2], qPD.UCL = out[,3],
+                   Reftime = rep(reft_complete,length(q)*length(datalist)),
+                   Method='Empirical',
+                   Type=ifelse(cal=="PD", "PD", "meanPD")) %>%
+    arrange(Reftime)
+  return(Output)
+}
+#=====old version=====
+# PD.qprofile=function(aL, q, cal, nt) {
+#   #aL is a table of 3 columns: abundance, branch lengths and characters specifying the group of each node.
+#   Abun <- unlist(aL[,1])
+#   bL <- unlist(aL[,2])
+#   t_bar <- sum(Abun / nt * bL)
+#   
+#   Sub = function(q) {
+#     PD=ifelse(q==1, exp(-sum(bL*Abun/t_bar/nt*log(Abun/t_bar/nt)) ),
+#               sum(bL*(Abun/t_bar/nt)^q)^(1/(1-q)))
+#     ifelse(cal=="PD",PD,PD/t_bar)
+#   }
+#   sapply(q, Sub)
+# }
+# Phdqtable <- function(datalist, phylotr, q, cal, datatype, nboot, conf, reft){
+#   qtile <- qnorm(1-(1-conf)/2)
+#   # all assemblages.
+#   nms <- names(datalist)
+#   if(datatype=="abundance"){
+#     out <- lapply(1:length(datalist), function(i){
+#       aL <- phyBranchAL_Abu(phylo = phylotr,data = datalist[[i]],datatype,refT = reft)
+#       x <- datalist[[i]]
+#       x <- x[x>0]
+#       n <- sum(x)
+#       emp <- c(t(PD.Tprofile(ai = aL$treeNabu$branch.abun,Lis=aL$BLbyT, q=q,cal = cal,nt = n)))
+#       if(nboot>0){
+#         Boots <- Boots.one(phylo = phylotr,aL = aL$treeNabu,datatype,nboot,reft = reft, BLs = aL$BLbyT )
+#         Li_b <- sapply(1:length(reft), function(reft_){
+#           Li_b <- Boots$Li[,reft_]
+#           Li_b[Li_b>reft[reft_]] <- reft[reft_]
+#           Li_b
+#         })
+#         Li_b <- matrix(Li_b,ncol=ncol(aL$BLbyT))
+#         ses <- sapply(1:nboot,function(B){
+#           c(t(PD.Tprofile(ai = Boots$boot_data[,B],Lis = Li_b, q=q,cal = cal,nt = n)))
+#         }) %>% apply(., 1, sd)
+#       }else{
+#         ses <- rep(NA,length(emp))
+#       }
+#       output <- cbind(emp,emp-qtile*ses,emp+qtile*ses)
+#       output[output[,2]<0,2] <- 0
+#       output
+#     }) %>% do.call(rbind,.)
+#   }else if(datatype=="incidence_raw"){
+#     out <- lapply(1:length(datalist), function(i){
+#       aL <- phyBranchAL_Inc(phylo = phylotr,data = datalist[[i]],datatype,refT = reft)
+#       x <- datalist[[i]]
+#       x <- x[rowSums(x)>0,colSums(x)>0]
+#       n <- ncol(x)
+#       # For incidence type, we use occurence frequencies instead of raw data since we already have aL table.
+#       emp <- c(t(PD.Tprofile(ai = aL$treeNabu$branch.abun,Lis=aL$BLbyT, q=q,cal = cal,nt = n)))
+#       if(nboot!=0){
+#         Boots <- Boots.one(phylo = phylotr,aL = aL$treeNabu,datatype,nboot,reft = reft, BLs = aL$BLbyT,splunits = n)
+#         Li_b <- sapply(1:length(reft), function(reft_){
+#           Li_b <- Boots$Li[,reft_]
+#           Li_b[Li_b>reft[reft_]] <- reft[reft_]
+#           Li_b
+#         })
+#         Li_b <- matrix(Li_b,ncol=ncol(aL$BLbyT))
+#         ses <- sapply(1:nboot,function(B){
+#           c(t(PD.Tprofile(ai = Boots$boot_data[,B],Lis = Li_b, q=q,cal = cal,nt = n)))
+#         }) %>% apply(., 1, sd)
+#       }else{
+#         ses <- rep(NA,length(emp))
+#       }
+#       output <- cbind(emp,emp-qtile*ses,emp+qtile*ses)
+#       output[output[,2]<0,2] <- 0
+#       output
+#     }) %>% do.call(rbind,.)
+#   }
+#   
+#   odr <- rep(q,length(reft)*length(nms))
+#   reftime <- rep(rep(reft,each = length(q)),length(nms))
+#   nms_tmp <- rep(nms,each = length(q)*length(reft))
+#   Outputforq <- tibble(Order.q = odr, Empirical = out[,1],LCL = out[,2], UCL = out[,3],
+#                        reftime = reftime,Assemblage = nms_tmp)
+#   Outputforq <- Outputforq %>% mutate (method = ifelse(cal=="PD", "PD", "meanPD"))
+#   return(Outputforq)
+# }
+# Phdttable <- function(datalist, phylotr, times, cal, datatype, nboot, conf){
+#   # Note 200117: currently, the reference time is automatically fixed at tree height of pooled species.
+#   qtile <- qnorm(1-(1-conf)/2)
+#   # all assemblages.
+#   if (datatype=="incidence_raw") {
+#     H_max <- get.rooted.tree.height(phylotr)
+#     da <- lapply(datalist, rowSums) %>% do.call(cbind, .) %>% rowSums()
+#   }
+#   if (datatype=="abundance") {
+#     H_max <- get.rooted.tree.height(phylotr)
+#     da <- do.call(cbind, datalist) %>% rowSums()
+#   }
+#   # if(abs(H_max - reft)<=1e-4) H_max <- reft
+#   # Note 200204: currently, to compute Q, we treat incidence data as abundance and absolutely pool
+#   aL <- phyBranchAL_Abu(phylo = phylotr,data = da,"abundance",refT = H_max)$treeNabu %>%
+#     select(branch.abun,branch.length,tgroup)
+#   PD2 <- PD.qprofile(aL,q = 2, cal =  "PD",nt = sum(da))
+#   Q <- H_max-(H_max^2)/PD2
+#   nms <- names(datalist)
+#   
+#   q_int <- c(0, 1, 2)
+#   if(datatype=="abundance"){
+#     out <- lapply(1:length(datalist), function(i){
+#       aL <- phyBranchAL_Abu(phylo = phylotr,data = datalist[[i]],datatype,refT = times)
+#       x <- datalist[[i]] %>% .[.>0]
+#       n <- sum(x)
+#       emp <- PD.Tprofile(ai = aL$treeNabu$branch.abun,Lis=aL$BLbyT, q=q_int,cal = cal,nt = n) %>%
+#         c()
+#       
+#       if(nboot!=0){
+#         Boots <- Boots.one(phylo = phylotr,aL = aL$treeNabu,datatype,nboot,reft = times, BLs = aL$BLbyT )
+#         Lis_b <- Boots$Li
+#         Lis_b <- sapply(1:length(times),function(l){
+#           tmp <- Lis_b[,l]
+#           tmp[tmp>times[l]] <- times[l]
+#           tmp
+#         })
+#         f0 <- Boots$f0
+#         #tgroup_B <- c(rep("Tip",length(x)+f0),rep("Inode",nrow(Lis_b)-length(x)-f0))
+#         ses <- sapply(1:nboot, function(B){
+#           x_b <- Boots$boot_data[,B]
+#           isn0 <- as.vector(x_b>0)
+#           Lis_b_tmp <- Lis_b[isn0,]
+#           #tgroup_B_tmp <- tgroup_B[isn0]
+#           x_b <- x_b[isn0]
+#           out_b <- PD.Tprofile(ai = x_b,Lis=Lis_b_tmp,q=q_int,cal = cal, nt = n) %>% c()
+#           out_b
+#         }) %>% apply(., 1, sd)
+#       }else{
+#         ses <- rep(NA,length(emp))
+#       }
+#       output <- cbind(emp,emp-qtile*ses,emp+qtile*ses)
+#       output[output[,2]<0,2] <- 0
+#       output
+#     }) %>% do.call(rbind,.)
+#   }else if(datatype=="incidence_raw"){
+#     out <- lapply(1:length(datalist), function(i){
+#       aL <- phyBranchAL_Inc(phylo = phylotr,data = datalist[[i]],datatype,refT = times)
+#       x <- datalist[[i]] %>% .[rowSums(.)>0,]
+#       n <- ncol(x)
+#       emp <- PD.Tprofile(ai = aL$treeNabu$branch.abun,Lis=aL$BLbyT,q=q_int,cal = cal,nt = n) %>%
+#         c()
+#       
+#       if(nboot!=0){
+#         Boots <- Boots.one(phylo = phylotr,aL = aL$treeNabu,datatype,nboot,reft = times,
+#                            BLs = aL$BLbyT,splunits = n)
+#         Lis_b <- Boots$Li
+#         Lis_b <- sapply(1:length(times),function(l){
+#           tmp <- Lis_b[,l]
+#           tmp[tmp>times[l]] <- times[l]
+#           tmp
+#         })
+#         f0 <- Boots$f0
+#         ses <- sapply(1:nboot, function(B){
+#           x_b <- Boots$boot_data[,B]
+#           isn0 <- as.vector(x_b>0)
+#           Lis_b_tmp <- Lis_b[isn0,]
+#           x_b <- x_b[isn0]
+#           out_b <- PD.Tprofile(ai = x_b,Lis=Lis_b_tmp,q=q_int,cal = cal,nt = n) %>% c()
+#           out_b
+#         }) %>% apply(., 1, sd)
+#       }else{
+#         ses <- rep(NA,length(emp))
+#       }
+#       output <- cbind(emp,emp-qtile*ses,emp+qtile*ses)
+#       output[output[,2]<0,2] <- 0
+#       output
+#     }) %>% do.call(rbind,.)
+#   }
+#   
+#   Outputfort <- tibble(time = rep(times,length(q_int)*length(datalist)),
+#                        Empirical = out[,1],LCL = out[,2], UCL = out[,3],
+#                        Order.q = rep(rep(q_int, each=length(times)),length(datalist)),
+#                        Assemblage = rep(nms, each=length(times)*length(q_int)),
+#                        method=ifelse(cal=="PD", "PD", "meanPD"))
+#   out = list(fort = Outputfort, Q_Height=c(Q, H_max))
+#   return(out)
+# }
 #====Currently useless ======
 # AUC_one_table <- function(datalist, phylotr, knot, cal, datatype, nboot, conf, reft_max) {
 #   qtile <- qnorm(1-(1-conf)/2)
@@ -417,67 +526,7 @@ EmpPD <- function(datalist,datatype, phylotr, q, reft, cal, nboot, conf){
 #                 Assemblage = rep(nms,each = length(q_int)))
 #   AUC
 # }
-#====Currently useless ======
-#=====old version=====
-# Plott <- function(out, cal, Q_Height){
-#   fort <- out
-#   fort$Order.q = paste0("q = ", fort$Order.q)
-#   fort$Order.q <- factor(fort$Order.q)
-#   Assemblage <- unique(fort$Assemblage)
-#   Q = Q_Height[1]
-#   root = Q_Height[2]
-#   # print(fort)
-#   # print(Q)
-#   if (cal=="PD") {
-#     if(length(Assemblage)==1){
-#       p2 <- ggplot(fort, aes(x=time, y=Empirical)) + geom_line(size=1.5,aes(color=Order.q))+
-#         geom_ribbon(aes(ymin=LCL,ymax=UCL,fill=Order.q),linetype = 0,alpha=0.3)
-#       p2 <-  p2 +xlab("time")+ylab("Phylogenetic Diversity")+theme(text=element_text(size=20),legend.position="bottom",legend.key.width = unit(2,"cm"))+
-#         geom_point(size=3, data=subset(fort, time%in%c(Q, root)), aes(x=time, y=Empirical, color=Order.q))+
-#         annotate('text',x=Q, y=0.1,label="Q" ,parse = TRUE,size=5, color = "gray") +
-#         annotate('text',x=root, y=0.1, label="root",parse = TRUE,size=5, color = "gray") +
-#         geom_vline(xintercept = c(Q,root), linetype = "longdash",size=0.5, color = "gray")
-#     }else{
-#       p2 <- ggplot(fort, aes(x=time, y=Empirical, color=Assemblage, linetype=Assemblage)) + geom_line(size=1.5)  +
-#         geom_ribbon(aes(ymin=LCL,ymax=UCL,fill=Assemblage),linetype = 0,alpha=0.3)+
-#         scale_color_manual(values = color_nogreen(length(unique(fort$Assemblage))))+
-#         scale_fill_manual(values = color_nogreen(length(unique(fort$Assemblage))))+
-#         theme(text=element_text(size=20),legend.position="bottom",legend.key.width = unit(2,"cm"))+
-#         geom_point(size=3, data=subset(fort, time%in%c(Q, root)), aes(x=time, y=Empirical, color=Assemblage))+
-#         annotate('text',x=Q, y=0.1,label="Q" ,parse = TRUE,size=5, color = "gray") +
-#         annotate('text',x=root, y=0.1, label="root",parse = TRUE,size=5, color = "gray") +
-#         geom_vline(xintercept = c(Q,root), linetype = "longdash",size=0.5, color = "gray") +
-#         facet_wrap(~Order.q, scales = "free")
-#       p2 <-  p2 +xlab("time")+ylab("Phylogenetic Diversity")
-#     }
-#   } else {
-#     if(length(Assemblage)==1){
-#       p2 <- ggplot(fort, aes(x=time, y=Empirical)) + geom_line(size=1.5,aes(color=Order.q))+
-#         geom_ribbon(aes(ymin=LCL,ymax=UCL,fill=Order.q),linetype = 0,alpha=0.3)
-#       p2 <-  p2 +xlab("time")+ylab("Phylogenetic Hill numbers")+theme(text=element_text(size=20),legend.position="bottom",legend.key.width = unit(2,"cm"))+
-#         geom_point(size=3, data=subset(fort, time%in%c(0.01, Q, root)), aes(x=time, y=Empirical, color=Order.q))+
-#         annotate('text',x=Q, y=0.1,label="Q" ,parse = TRUE,size=5, color = "gray") +
-#         annotate('text',x=0.01, y=0.1,label=0.01 ,parse = TRUE,size=5, color = "gray") +
-#         annotate('text',x=root, y=0.1, label="root",parse = TRUE,size=5, color = "gray") +
-#         geom_vline(xintercept = c(0.01, Q,root), linetype = "longdash",size=0.5, color = "gray")
-#     }else{
-#       p2 <- ggplot(fort, aes(x=time, y=Empirical, color=Assemblage, linetype=Assemblage)) + geom_line(size=1.5)  +
-#         geom_ribbon(aes(ymin=LCL,ymax=UCL,fill=Assemblage),linetype = 0,alpha=0.3)+
-#         scale_color_manual(values = color_nogreen(length(unique(fort$Assemblage))))+
-#         scale_fill_manual(values = color_nogreen(length(unique(fort$Assemblage))))+
-#         theme(text=element_text(size=20),legend.position="bottom",legend.key.width = unit(2,"cm"))+
-#         geom_point(size=3, data=subset(fort, time%in%c(0.01, Q, root)), aes(x=time, y=Empirical, color=Assemblage))+
-#         annotate('text',x=Q, y=0.1,label="Q" ,parse = TRUE,size=5, color = "gray") +
-#         annotate('text',x=0.01, y=0.1,label=0.01 ,parse = TRUE,size=5, color = "gray") +
-#         annotate('text',x=root, y=0.1, label="root",parse = TRUE,size=5, color = "gray") +
-#         geom_vline(xintercept = c(0.01, Q,root), linetype = "longdash",size=0.5, color = "gray") +
-#         facet_wrap(~Order.q, scales = "free")
-#       p2 <-  p2 +xlab("time")+ylab("Phylogenetic Hill numbers")
-#     }
-#   }
-#   return(p2)
-# }
-#=====new version=====
+#=====Plotting functions=====
 Plott <- function(out){
   fort <- out
   fort$Order.q <- factor(paste0("q = ", fort$Order.q),levels = paste0("q = ", unique(fort$Order.q)))
@@ -539,6 +588,11 @@ AsyPD <- function(datalist, datatype, phylotr, q,reft, cal,nboot, conf){#change 
       if(nboot!=0){
         Boots <- Boots.one(phylo = phylotr,aL = aL$treeNabu,datatype,nboot,reft = reft, BLs = aL$BLbyT )
         Li_b <- Boots$Li
+        Li_b <- sapply(1:length(reft),function(l){
+          tmp <- Li_b[,l]
+          tmp[tmp>reft[l]] <- reft[l]
+          tmp
+        })
         f0 <- Boots$f0
         # tgroup_B <- c(rep("Tip",length(x)+f0),rep("Inode",nrow(Li_b)-length(x)-f0))
         # aL_table_b <- tibble(branch.abun = 0, branch.length= Li_b[,1],tgroup = tgroup_B)
@@ -569,6 +623,11 @@ AsyPD <- function(datalist, datatype, phylotr, q,reft, cal,nboot, conf){#change 
         Boots <- Boots.one(phylo = phylotr,aL = aL$treeNabu,datatype = datatype,nboot = nboot,
                            splunits = n,reft = reft, BLs = aL$BLbyT )
         Li_b <- Boots$Li
+        Li_b <- sapply(1:length(reft),function(l){
+          tmp <- Li_b[,l]
+          tmp[tmp>reft[l]] <- reft[l]
+          tmp
+        })
         f0 <- Boots$f0
         # tgroup_B <- c(rep("Tip",nrow(x)+f0),rep("Inode",nrow(Li_b)-nrow(x)-f0))
         # aL_table_b <- tibble(branch.abun = 0, branch.length= Li_b[,1],tgroup = tgroup_B)
@@ -596,59 +655,59 @@ AsyPD <- function(datalist, datatype, phylotr, q,reft, cal,nboot, conf){#change 
   Estoutput$qPD.LCL[Estoutput$qPD.LCL<0] = 0
   return(Estoutput)
 }
-Asy_plot = function(output, type, method=NULL){##add title
-  if(is.null(method) == T){
-    ylab_ <- "Phylogenetic diversity"
-  }else{
-    if( substr(method,1,1) != "1" ){
-      ylab_ <- paste("Phylogenetic", method ,"diversity")
-    }else{
-      ylab_ <- method
-    }
-  }
-  if(is.null(method) == T & type == 1) {
-    title_ <- "Phylogenetic diversity (asymptotic)"
-  } else if(is.null(method) == T & type == 2) {
-    title_ <- "Phylogenetic diversity (observed)"
-  } else if( substr(method,1,1) != "1"  & type == 1) {
-    title_ <- paste("Phylogenetic", method ,"diversity", "(asymptotic)")
-  } else if( substr(method,1,1) != "1"  & type == 2) {
-    title_ <- paste("Phylogenetic", method ,"diversity", "(observed)")
-  } else if( substr(method,1,1) == "1"  & type == 1) {
-    title_ <- paste(method, "(asymptotic)")
-  } else if( substr(method,1,1) == "1"  & type == 2) {
-    title_ <- paste(method, "(observed)")
-  } else if(type == 3) {
-    title_ <- paste(method, "(asymptotic)")
-  } else {
-    title_ <- paste(method, "(observed)")
-  }
-  if(ncol(output) %in% c(2, 5)) output = cbind(output, "Beta")
-  if(ncol(output) == 6){
-    colnames(output) = c("x", "y", "se", "LCL", "UCL","Assemblage")
-    Assemblage <- unique(output[,6]) %>% unlist
-  }else{
-    colnames(output) = c("x", "y","Assemblage")
-    Assemblage <- unique(output[,3]) %>% unlist
-  }
-  q <- unlist(output$x)
-  q1<-q[(round(q) - q) ==0]
-  if(length(Assemblage) == 1){
-    p <- ggplot(output,aes(x=x,y=y))+geom_line(size=1.5,color="#F8766D")+xlab("Order q")+
-      geom_point(size=3, data=subset(output, x%in%q1),color="#F8766D")+
-      ylab(ylab_)+theme(text=element_text(size=20),legend.position="bottom",legend.key.width = unit(2,"cm"))
-    if(ncol(output) == 6) p <- p + geom_ribbon(aes(ymin=LCL,ymax=UCL),alpha=0.2,fill="#F8766D")
-  }else{
-    p <- ggplot(output,aes(x=x,y=y,color=Assemblage,linetype=Assemblage))+geom_line(size=1.5)+xlab("Order q")+
-      scale_color_manual(values = color_nogreen(length(unique(output$Assemblage))))+
-      geom_point(size=3, data=subset(output, x%in%q1))+
-      ylab(ylab_)+theme(text=element_text(size=20),legend.position="bottom",legend.key.width = unit(2,"cm"))
-    if(ncol(output) == 6) p <- p + geom_ribbon(aes(ymin=LCL,ymax=UCL,fill=Assemblage),alpha=0.2, colour=NA)+scale_fill_manual(values = color_nogreen(length(unique(output$Assemblage))))
-  }
-  p <- p+ggtitle(title_)
-  return(p)
-}
 #=====old version=====
+# Asy_plot = function(output, type, method=NULL){##add title
+#   if(is.null(method) == T){
+#     ylab_ <- "Phylogenetic diversity"
+#   }else{
+#     if( substr(method,1,1) != "1" ){
+#       ylab_ <- paste("Phylogenetic", method ,"diversity")
+#     }else{
+#       ylab_ <- method
+#     }
+#   }
+#   if(is.null(method) == T & type == 1) {
+#     title_ <- "Phylogenetic diversity (asymptotic)"
+#   } else if(is.null(method) == T & type == 2) {
+#     title_ <- "Phylogenetic diversity (observed)"
+#   } else if( substr(method,1,1) != "1"  & type == 1) {
+#     title_ <- paste("Phylogenetic", method ,"diversity", "(asymptotic)")
+#   } else if( substr(method,1,1) != "1"  & type == 2) {
+#     title_ <- paste("Phylogenetic", method ,"diversity", "(observed)")
+#   } else if( substr(method,1,1) == "1"  & type == 1) {
+#     title_ <- paste(method, "(asymptotic)")
+#   } else if( substr(method,1,1) == "1"  & type == 2) {
+#     title_ <- paste(method, "(observed)")
+#   } else if(type == 3) {
+#     title_ <- paste(method, "(asymptotic)")
+#   } else {
+#     title_ <- paste(method, "(observed)")
+#   }
+#   if(ncol(output) %in% c(2, 5)) output = cbind(output, "Beta")
+#   if(ncol(output) == 6){
+#     colnames(output) = c("x", "y", "se", "LCL", "UCL","Assemblage")
+#     Assemblage <- unique(output[,6]) %>% unlist
+#   }else{
+#     colnames(output) = c("x", "y","Assemblage")
+#     Assemblage <- unique(output[,3]) %>% unlist
+#   }
+#   q <- unlist(output$x)
+#   q1<-q[(round(q) - q) ==0]
+#   if(length(Assemblage) == 1){
+#     p <- ggplot(output,aes(x=x,y=y))+geom_line(size=1.5,color="#F8766D")+xlab("Order q")+
+#       geom_point(size=3, data=subset(output, x%in%q1),color="#F8766D")+
+#       ylab(ylab_)+theme(text=element_text(size=20),legend.position="bottom",legend.key.width = unit(2,"cm"))
+#     if(ncol(output) == 6) p <- p + geom_ribbon(aes(ymin=LCL,ymax=UCL),alpha=0.2,fill="#F8766D")
+#   }else{
+#     p <- ggplot(output,aes(x=x,y=y,color=Assemblage,linetype=Assemblage))+geom_line(size=1.5)+xlab("Order q")+
+#       scale_color_manual(values = color_nogreen(length(unique(output$Assemblage))))+
+#       geom_point(size=3, data=subset(output, x%in%q1))+
+#       ylab(ylab_)+theme(text=element_text(size=20),legend.position="bottom",legend.key.width = unit(2,"cm"))
+#     if(ncol(output) == 6) p <- p + geom_ribbon(aes(ymin=LCL,ymax=UCL,fill=Assemblage),alpha=0.2, colour=NA)+scale_fill_manual(values = color_nogreen(length(unique(output$Assemblage))))
+#   }
+#   p <- p+ggtitle(title_)
+#   return(p)
+# }
 # PhD.q.est = function(aL, q, datatype, nt){
 #   t_bar <-  sum(aL[,1] / nt * aL[,2])
 #   aL <- aL %>% select(branch.abun, branch.length)
@@ -706,15 +765,6 @@ Asy_plot = function(output, type, method=NULL){##add title
 #=====new version=====
 PhD.q.est = function(ai,Lis, q, nt, cal){
   t_bars <- as.numeric(t(ai) %*% Lis/nt)
-  I1 <- which(ai==1);I2 <- which(ai==2)
-  f1 <- length(I1);f2 <- length(I2)
-  if(f2 > 0){
-    A = 2*f2/((nt-1)*f1+2*f2)
-  }else if(f2 == 0 & f1 > 0){
-    A = 2/((nt-1)*(f1-1)+2)
-  }else{
-    A = 1
-  }
   S <- length(ai)
   if(1 %in% q){
     ai_h1_I <- ai<=(nt-1)
@@ -734,7 +784,7 @@ PhD.q.est = function(ai,Lis, q, nt, cal){
       deltas_pt2
     }) %>% t() # n x S matrix of delta (2nd part)
   }
-  Sub <- function(q,g1,g2,PD_obs,t_bar,Li){
+  Sub <- function(q,f1,f2,A,g1,g2,PD_obs,t_bar,Li){
     if(q==0){
       ans <- PD_obs+Dq0(nt,f1,f2,g1,g2)
     }else if(q==1){
@@ -759,11 +809,14 @@ PhD.q.est = function(ai,Lis, q, nt, cal){
   }
   est <- sapply(1:ncol(Lis),function(i){
     Li = Lis[,i]
+    I1 <- which(ai==1&Li>0);I2 <- which(ai==2&Li>0)
+    f1 <- length(I1);f2 <- length(I2)
+    A <- ifelse(f2 > 0, 2*f2/((nt-1)*f1+2*f2), ifelse(f1 > 0, 2/((nt-1)*(f1-1)+2), 1))
     t_bar <- t_bars[i]
     PD_obs <- sum(Li)
     g1 <- sum(Li[I1])
     g2 <- sum(Li[I2])
-    est <- sapply(q, function(q_) Sub(q = q_,g1 = g1,g2 = g2,PD_obs = PD_obs,t_bar = t_bar,Li = Li))
+    est <- sapply(q, function(q_) Sub(q = q_,f1 = f1, f2 = f2, A = A,g1 = g1,g2 = g2,PD_obs = PD_obs,t_bar = t_bar,Li = Li))
   })
   if(cal=='PD'){
     est <- as.numeric(est)
@@ -787,11 +840,16 @@ Boots.one = function(phylo, aL, datatype, nboot,reft, BLs, splunits = NULL){
     lambda <- (1-c) / sum((data/n)*(1- (data/n) )^n)
     
     p_hat <- (data/n) * (1-lambda*(1- (data/n) )^n)
-    p_hat0 <- rep( (1-c) / f0 , f0 );names(p_hat0) <- paste0("notob",1:length(p_hat0))
+    p_hat0 <- rep( (1-c) / f0 , f0 )
+    if(length(p_hat0)>0) names(p_hat0) <- paste0("notob",1:length(p_hat0))
     g0_hat <- sapply(1:length(reft), function(i){
-      g1 <- BLs[,i][aL$branch.abun==1] %>% sum
-      g2 <- aL$branch.length[aL$branch.abun==2] %>% sum
-      g0_hat <- ifelse( g2>((g1*f2)/(2*f1)) , ((n-1)/n)*(g1^2/(2*g2)) , ((n-1)/n)*(g1*(f1-1)/(2*(f2+1))) )
+      Li = BLs[,i]
+      I1 <- which(aL$branch.abun==1&Li>0);I2 <- which(aL$branch.abun==2&Li>0)
+      f1 <- length(I1);f2 <- length(I2)
+      g1 <- sum(Li[I1])
+      g2 <- sum(Li[I2])
+      g0_hat <- ifelse(f1==0,0, 
+                       ifelse(g2>((g1*f2)/(2*f1)) , ((n-1)/n)*(g1^2/(2*g2)) , ((n-1)/n)*(g1*(f1-1)/(2*(f2+1))) ))
       g0_hat
     })
     # g1 <- aL$branch.length[aL$branch.abun==1] %>% sum
@@ -811,8 +869,8 @@ Boots.one = function(phylo, aL, datatype, nboot,reft, BLs, splunits = NULL){
     data <- unlist(aL$branch.abun[aL$tgroup=="Tip"])
     names(data) <- rownames(BLs)[1:length(data)]
     u <- sum(data)
-    f1 <- sum(aL$branch.abun==1)
-    f2 <- sum(aL$branch.abun==2)
+    f1 <- sum(data==1)
+    f2 <- sum(data==2)
     f0 <- ceiling( ifelse( f2>0 , ((n-1) / n) * (((f1)^2) / (2*f2) ), ((n-1) / n) * (f1)*(f1-1) / 2 ) )
     c <- ifelse(f2>0, 1 - (f1/u)*((n-1)*f1/((n-1)*f1+2*f2)),
                 1 - (f1/u)*((n-1)*(f1-1)/((n-1)*(f1-1)+2)))
@@ -820,9 +878,13 @@ Boots.one = function(phylo, aL, datatype, nboot,reft, BLs, splunits = NULL){
     p_hat <- (data/n) * (1-lambda*(1- (data/n) )^n)
     p_hat0 <- rep( (u/n) * (1-c) / f0 , f0 );names(p_hat0) <- paste0("notob",1:length(p_hat0))
     g0_hat <- sapply(1:length(reft), function(i){
-      g1 <- BLs[,i][aL$branch.abun==1] %>% sum
-      g2 <- aL$branch.length[aL$branch.abun==2] %>% sum
-      g0_hat <- ifelse( g2>((g1*f2)/(2*f1)) , ((n-1)/n)*(g1^2/(2*g2)) , ((n-1)/n)*(g1*(f1-1)/(2*(f2+1))) )
+      Li = BLs[,i]
+      I1 <- which(aL$branch.abun==1&Li>0);I2 <- which(aL$branch.abun==2&Li>0)
+      f1 <- length(I1);f2 <- length(I2)
+      g1 <- sum(Li[I1])
+      g2 <- sum(Li[I2])
+      g0_hat <- ifelse(f1==0,0, 
+                       ifelse(g2>((g1*f2)/(2*f1)) , ((n-1)/n)*(g1^2/(2*g2)) , ((n-1)/n)*(g1*(f1-1)/(2*(f2+1))) ))
       g0_hat
     })
     # g1 <- aL$branch.length[aL$branch.abun==1] %>% sum
@@ -865,6 +927,11 @@ inextPD = function(datalist, datatype, phylotr, q,reft, m, cal, nboot, conf=0.95
       if(nboot>1){
         Boots <- Boots.one(phylo = phylotr,aL$treeNabu,datatype,nboot,reft,aL$BLbyT)
         Li_b <- Boots$Li
+        Li_b <- sapply(1:length(reft),function(l){
+          tmp <- Li_b[,l]
+          tmp[tmp>reft[l]] <- reft[l]
+          tmp
+        })
         f0 <- Boots$f0
         tgroup_B <- c(rep("Tip",length(x)+f0),rep("Inode",nrow(Li_b)-length(x)-f0))
         #aL_table_b <- tibble(branch.abun = 0, branch.length= Li_b[,1],tgroup = tgroup_B)
@@ -955,6 +1022,11 @@ inextPD = function(datalist, datatype, phylotr, q,reft, m, cal, nboot, conf=0.95
       if(nboot>1){
         Boots <- Boots.one(phylo = phylotr,aL$treeNabu,datatype,nboot,reft,aL$BLbyT,n)
         Li_b <- Boots$Li
+        Li_b <- sapply(1:length(reft),function(l){
+          tmp <- Li_b[,l]
+          tmp[tmp>reft[l]] <- reft[l]
+          tmp
+        })
         f0 <- Boots$f0
         tgroup_B <- c(rep("Tip",nrow(x)+f0),rep("Inode",nrow(Li_b)-nrow(x)-f0))
         if(unconditional_var){
@@ -1285,6 +1357,11 @@ invChatPD <- function(datalist, datatype,phylotr, q, reft, cal,level, nboot, con
       if(nboot>1){
         Boots <- Boots.one(phylo = phylotr,aL$treeNabu,datatype,nboot,reft,aL$BLbyT,n)
         Li_b <- Boots$Li
+        Li_b <- sapply(1:length(reft),function(l){
+          tmp <- Li_b[,l]
+          tmp[tmp>reft[l]] <- reft[l]
+          tmp
+        })
         f0 <- Boots$f0
         tgroup_B <- c(rep("Tip",length(x_)+f0),rep("Inode",nrow(Li_b)-length(x_)-f0))
         #aL_table_b <- tibble(branch.abun = 0, branch.length= Li_b[,1],tgroup = tgroup_B)
@@ -1318,6 +1395,11 @@ invChatPD <- function(datalist, datatype,phylotr, q, reft, cal,level, nboot, con
       if(nboot>1){
         Boots <- Boots.one(phylo = phylotr,aL$treeNabu,datatype,nboot,reft,aL$BLbyT,n)
         Li_b <- Boots$Li
+        Li_b <- sapply(1:length(reft),function(l){
+          tmp <- Li_b[,l]
+          tmp[tmp>reft[l]] <- reft[l]
+          tmp
+        })
         f0 <- Boots$f0
         tgroup_B <- c(rep("Tip",nrow(x_)+f0),rep("Inode",nrow(Li_b)-nrow(x_)-f0))
         #aL_table_b <- tibble(branch.abun = 0, branch.length= Li_b[,1],tgroup = tgroup_B)
@@ -1523,6 +1605,118 @@ invChatPD_inc <- function(x,ai,Lis, q, Cs, n,cal){ # x is a matrix
   Reftime = rep(rep(reft,each = length(q)),length(Cs))
   tibble(nt = m,Method = method,Order.q = order,
          qPD = out,SC=SC,goalSC = goalSC, Reftime = Reftime)
+}
+
+
+#====Sub Functions: when reftime < the age of first divergence======
+TD.Tprofile <- function(x,q, datatype="abundance",nboot=50, conf=0.95,cal,reft_taxo){
+  qtile <- qnorm(1-(1-conf)/2)
+  if(cal=='meanPD') reft_taxo <- rep(1,length(reft_taxo))
+  reft_taxo_dummy <- rep(reft_taxo,length(q))
+  if(datatype=="abundance"){
+    dq <- rep(Diversity_profile_MLE(x,q),each = length(reft_taxo))*reft_taxo_dummy
+    if(nboot>1){
+      Prob.hat <- EstiBootComm.Ind(x)
+      ses <- sapply(1:length(reft_taxo), function(l){
+        Abun.Mat <- rmultinom(nboot, sum(x), Prob.hat)
+        se <- apply(matrix(apply(Abun.Mat, 2, function(xb) Diversity_profile_MLE(xb,q))*reft_taxo[l],
+                           nrow = length(q)), 1, sd, na.rm=TRUE)
+        c(se)
+      }) %>% matrix(.,nrow = length(q),ncol = length(reft_taxo)) %>% t %>% c
+    }else{ses = rep(NA,length(reft_taxo)*length(q))}
+  }else if(datatype=='incidence_raw'){
+    nT <- ncol(x)
+    x <- c(nT,rowSums(x))
+    dq <- rep(Diversity_profile_MLE.inc(x,q),each = length(reft_taxo))*reft_taxo_dummy
+    if(nboot>1){
+      Prob.hat <- EstiBootComm.Sam(x)
+      ses <- sapply(1:length(reft_taxo), function(l){
+        Abun.Mat <- t(sapply(Prob.hat, function(p) rbinom(nboot, nT, p)))
+        Abun.Mat <- matrix(c(rbind(nT, Abun.Mat)),ncol=nboot)
+        tmp <- which(colSums(Abun.Mat)==nT)
+        if(length(tmp)>0) Abun.Mat <- Abun.Mat[,-tmp]
+        if(ncol(Abun.Mat)==0){
+          se = NA
+          warning("Insufficient data to compute bootstrap s.e.")
+        }else{		
+          se <- apply(matrix(apply(Abun.Mat, 2, function(yb) Diversity_profile_MLE.inc(yb,q))*reft_taxo[l],
+                         nrow = length(q)), 1, sd, na.rm=TRUE)
+        }
+        se
+      }) %>% matrix(.,nrow = length(q),ncol = length(reft_taxo)) %>% t %>% c
+    
+    }else{ses = rep(NA,length(reft_taxo)*length(q))}
+  }
+  output <- cbind(dq,dq-qtile*ses,dq+qtile*ses)
+  output
+}
+
+Diversity_profile_MLE <- function(x,q){
+  p <- x[x>0]/sum(x)
+  Sub <- function(q){
+    if(q==0) sum(p>0)
+    else if(q==1) exp(-sum(p*log(p)))
+    else exp(1/(1-q)*log(sum(p^q)))
+  }
+  sapply(q, Sub)
+}
+Diversity_profile_MLE.inc <- function(data,q){
+  Yi = data[-1]
+  U = sum(Yi)
+  Yi <- Yi[Yi!=0]
+  ai <- Yi/U
+  qD = qD_MLE(q,ai)
+  qD[which(q==1)] <- exp(-sum(ai*log(ai)))
+  return(qD)
+}
+
+EstiBootComm.Ind <- function(Spec)
+{
+  Sobs <- sum(Spec > 0)   #observed species
+  n <- sum(Spec)        #sample size
+  f1 <- sum(Spec == 1)   #singleton 
+  f2 <- sum(Spec == 2)   #doubleton
+  f0.hat <- ifelse(f2 == 0, (n - 1) / n * f1 * (f1 - 1) / 2, (n - 1) / n * f1 ^ 2/ 2 / f2)  #estimation of unseen species via Chao1
+  A <- ifelse(f1>0, n*f0.hat/(n*f0.hat+f1), 1)
+  a <- f1/n*A
+  b <- sum(Spec / n * (1 - Spec / n) ^ n)
+  if(f0.hat==0){
+    w <- 0
+    if(sum(Spec>0)==1){
+      warning("This site has only one species. Estimation is not robust.")
+    }
+  }else{
+    w <- a / b      	#adjusted factor for rare species in the sample
+  }
+  Prob.hat <- Spec / n * (1 - w * (1 - Spec / n) ^ n)					#estimation of relative abundance of observed species in the sample
+  Prob.hat.Unse <- rep(a/ceiling(f0.hat), ceiling(f0.hat))  	#estimation of relative abundance of unseen species in the sample
+  return(sort(c(Prob.hat, Prob.hat.Unse), decreasing=TRUE))		  							#Output: a vector of estimated relative abundance
+}
+
+EstiBootComm.Sam <- function(Spec)
+{
+  nT <- Spec[1]
+  Spec <- Spec[-1]
+  Sobs <- sum(Spec > 0)   #observed species
+  Q1 <- sum(Spec == 1) 	#singleton 
+  Q2 <- sum(Spec == 2) 	#doubleton
+  Q0.hat <- ifelse(Q2 == 0, (nT - 1) / nT * Q1 * (Q1 - 1) / 2, (nT - 1) / nT * Q1 ^ 2/ 2 / Q2)	#estimation of unseen species via Chao2
+  A <- ifelse(Q1>0, nT*Q0.hat/(nT*Q0.hat+Q1), 1)
+  a <- Q1/nT*A
+  b <- sum(Spec / nT * (1 - Spec / nT) ^ nT)
+  
+  if(Q0.hat==0){
+    w <- 0
+    if(sum(Spec>0)==1){
+      warning("This site has only one species. Estimation is not robust.")
+    }
+  }else{
+    w <- a / b      	#adjusted factor for rare species in the sample
+  }
+  
+  Prob.hat <- Spec / nT * (1 - w * (1 - Spec / nT) ^ nT)					#estimation of detection probability of observed species in the sample
+  Prob.hat.Unse <- rep(a/ceiling(Q0.hat), ceiling(Q0.hat))  	#estimation of detection probability of unseen species in the sample
+  return(sort(c(Prob.hat, Prob.hat.Unse), decreasing=TRUE))									#Output: a vector of estimated detection probability
 }
 
 

@@ -144,6 +144,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// qD_MLE
+NumericVector qD_MLE(NumericVector q, NumericVector ai);
+RcppExport SEXP _iNEXTPD2_qD_MLE(SEXP qSEXP, SEXP aiSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type q(qSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type ai(aiSEXP);
+    rcpp_result_gen = Rcpp::wrap(qD_MLE(q, ai));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_iNEXTPD2_Dq0", (DL_FUNC) &_iNEXTPD2_Dq0, 5},
@@ -156,6 +168,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_iNEXTPD2_RPD_old", (DL_FUNC) &_iNEXTPD2_RPD_old, 4},
     {"_iNEXTPD2_RPD", (DL_FUNC) &_iNEXTPD2_RPD, 5},
     {"_iNEXTPD2_ghat_pt2", (DL_FUNC) &_iNEXTPD2_ghat_pt2, 3},
+    {"_iNEXTPD2_qD_MLE", (DL_FUNC) &_iNEXTPD2_qD_MLE, 2},
     {NULL, NULL, 0}
 };
 
