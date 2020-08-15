@@ -828,7 +828,7 @@ ggtqplotPD <- function(outcome,profile = 'q'){
   }
 }
 
-PhdObS2 <- function(data,nT,datatype = "abundance",tree,q = seq(0, 2, by = 0.25),reftime = NULL,type = "PD",
+PhdObs2 <- function(data,nT,datatype = "abundance",tree,q = seq(0, 2, by = 0.25),reftime = NULL,type = "PD",
                     nboot = 50,conf = 0.95){
   if(sum(c(duplicated(tree$tip.label),duplicated(tree$node.label[tree$node.label!=""])))>0)
     stop("The phylo tree should not contains duplicated tip or node labels, please remove them.", call. = FALSE)
