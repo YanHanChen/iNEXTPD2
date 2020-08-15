@@ -156,6 +156,47 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// D1_2nd
+double D1_2nd(double n, double f1, double A);
+RcppExport SEXP _iNEXTPD2_D1_2nd(SEXP nSEXP, SEXP f1SEXP, SEXP ASEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type n(nSEXP);
+    Rcpp::traits::input_parameter< double >::type f1(f1SEXP);
+    Rcpp::traits::input_parameter< double >::type A(ASEXP);
+    rcpp_result_gen = Rcpp::wrap(D1_2nd(n, f1, A));
+    return rcpp_result_gen;
+END_RCPP
+}
+// Dq_TD
+NumericVector Dq_TD(NumericMatrix ifi, int n, NumericVector qs, double f1, double A);
+RcppExport SEXP _iNEXTPD2_Dq_TD(SEXP ifiSEXP, SEXP nSEXP, SEXP qsSEXP, SEXP f1SEXP, SEXP ASEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type ifi(ifiSEXP);
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type qs(qsSEXP);
+    Rcpp::traits::input_parameter< double >::type f1(f1SEXP);
+    Rcpp::traits::input_parameter< double >::type A(ASEXP);
+    rcpp_result_gen = Rcpp::wrap(Dq_TD(ifi, n, qs, f1, A));
+    return rcpp_result_gen;
+END_RCPP
+}
+// qDFUN
+NumericVector qDFUN(NumericVector q, NumericVector Xi, const int n);
+RcppExport SEXP _iNEXTPD2_qDFUN(SEXP qSEXP, SEXP XiSEXP, SEXP nSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type q(qSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type Xi(XiSEXP);
+    Rcpp::traits::input_parameter< const int >::type n(nSEXP);
+    rcpp_result_gen = Rcpp::wrap(qDFUN(q, Xi, n));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_iNEXTPD2_Dq0", (DL_FUNC) &_iNEXTPD2_Dq0, 5},
@@ -169,6 +210,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_iNEXTPD2_RPD", (DL_FUNC) &_iNEXTPD2_RPD, 5},
     {"_iNEXTPD2_ghat_pt2", (DL_FUNC) &_iNEXTPD2_ghat_pt2, 3},
     {"_iNEXTPD2_qD_MLE", (DL_FUNC) &_iNEXTPD2_qD_MLE, 2},
+    {"_iNEXTPD2_D1_2nd", (DL_FUNC) &_iNEXTPD2_D1_2nd, 3},
+    {"_iNEXTPD2_Dq_TD", (DL_FUNC) &_iNEXTPD2_Dq_TD, 5},
+    {"_iNEXTPD2_qDFUN", (DL_FUNC) &_iNEXTPD2_qDFUN, 3},
     {NULL, NULL, 0}
 };
 

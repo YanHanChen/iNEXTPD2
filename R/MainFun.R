@@ -62,7 +62,8 @@
 #' data <- data.inc$data
 #' tree <- data.inc$tree
 #' nT <- data.inc$nT
-#' out <- iNEXTPD(data = data, nT = nT, datatype = "incidence_raw", tree = tree, q = c(0, 1, 2))
+#' out <- iNEXTPD(data = data, nT = nT, datatype = "incidence_raw", tree = tree, 
+#' q = c(0, 1, 2))
 #' out
 #' }
 #' @references
@@ -757,7 +758,8 @@ PDInfo <- function(data,nT,datatype = "abundance", tree,reftime=NULL){
 #' data <- data.inc$data
 #' tree <- data.inc$tree
 #' nT <- data.inc$nT
-#' out <- iNEXTPD(data = data, nT = nT, datatype = "incidence_raw", tree = tree, q = c(0, 1, 2), nboot = 30)
+#' out <- iNEXTPD(data = data, nT = nT, datatype = "incidence_raw", tree = tree, 
+#' q = c(0, 1, 2), nboot = 30)
 #' ggiNEXTPD(out)
 #' }
 #' 
@@ -826,7 +828,7 @@ ggtqplotPD <- function(outcome,profile = 'q'){
   }
 }
 
-PhdObs2 <- function(data,nT,datatype = "abundance",tree,q = seq(0, 2, by = 0.25),reftime = NULL,type = "PD",
+PhdObS2 <- function(data,nT,datatype = "abundance",tree,q = seq(0, 2, by = 0.25),reftime = NULL,type = "PD",
                     nboot = 50,conf = 0.95){
   if(sum(c(duplicated(tree$tip.label),duplicated(tree$node.label[tree$node.label!=""])))>0)
     stop("The phylo tree should not contains duplicated tip or node labels, please remove them.", call. = FALSE)
@@ -891,6 +893,69 @@ PhdObs2 <- function(data,nT,datatype = "abundance",tree,q = seq(0, 2, by = 0.25)
   return(ans)
 }
 
+PhdAsy2 <- function(data,nT,datatype = "abundance",tree,q = seq(0,2,by = 0.25),reftime = NULL,type = 'PD',nboot = 50,conf = 0.95){
+  if(sum(c(duplicated(tree$tip.label),duplicated(tree$node.label[tree$node.label!=""])))>0)
+    stop("The phylo tree should not contains duplicated tip or node labels, please remove them.", call. = FALSE)
+  #if (length(q) == 1) stop("length of q should be greater than one", call. = FALSE)
+  DATATYPE <- c("abundance", "incidence_raw")
+  if(is.na(pmatch(datatype, DATATYPE)) == T)
+    stop("Invalid datatype", call. = FALSE)
+  divtype <- c("PD", "meanPD")
+  if(is.na(pmatch(type, divtype)) == T)
+    stop("Incorrect type of desired diversity type, please use either PD or meanPD.", call. = FALSE)
+  if (sum(q<0)>=1) stop("q must be a positive number", call. = FALSE)
+  if ((conf < 0) | (conf < 0) | (is.numeric(conf)==F)) stop('conf"(confidence level) must be a numerical value between 0 and 1, We use "conf" = 0.95 to calculate!', call. = FALSE)
+  if ((nboot < 0) | (is.numeric(nboot)==F)) stop('nboot must be a nonnegative integer, We use "nboot" = 50 to calculate!', call. = FALSE)
+  if(c("numeric") %in% class(data) | c("integer") %in% class(data) | c("double") %in% class(data) ) data <- as.matrix(data)
+  if(is.null(rownames(data) ))
+    stop("Row names of data must be the species names that match tip names in tree and thus can not be empty.", call. = FALSE)
+  
+  data <- data[rowSums(data)>0,,drop=FALSE]
+  pool.name <- rownames(data)
+  mydata = list()
+  if(datatype=="incidence_raw"){
+    if(ncol(data) != sum(nT)) stop("Number of columns does not euqal to the sum of key(nT) in sampling units", call. = FALSE)
+    ntmp <- 0
+    for(i in 1:length(nT)){
+      mydata[[i]] <- data[,(ntmp+1):(ntmp+nT[i])]
+      ntmp <- ntmp+nT[i]
+    }
+    if(is.null(names(nT))) {
+      names(mydata) <- paste0("assemblage",1:length(nT))
+    }else{
+      names(mydata) = names(nT)
+    }
+  }else if (datatype == "abundance"){
+    if(is.null(colnames(data))) {colnames(data) <- paste0("assemblage",1:ncol(data))}
+    mydata <- lapply(1:ncol(data), function(i)  {x <- data[,i];names(x) <- pool.name;x})
+    names(mydata) = colnames(data)
+  }
+  ###
+  tip <- tree$tip.label[-match(pool.name,tree$tip.label)]
+  mytree <- drop.tip(tree,tip)
+  H_max <- get.rooted.tree.height(mytree)
+  
+  # reft <- reftime
+  if(is.null(reftime)) reftime <- H_max else reftime <- reftime
+  #reftime <- ifelse(is.null(reftime),H_max,reftime)
+  reftime <- sort(unique(reftime))
+  if(sum(reftime<=0)>0) {stop("Reference time must be greater than 0. Use NULL to set it to pooled tree height.",call. = FALSE)
+  }
+  
+  # if(class(mydata) == "list"){
+  #   infos <- sapply(mydata, function(x){
+  #     datainf(data = x, datatype, phylotr = mytree,reft = reft)})
+  # }else{
+  #   return(NULL)
+  # }
+  
+  FUN = function(e){
+    AsyPD2(datalist = mydata,datatype = datatype,phylotr = mytree,q = q,reft = reftime,cal = type,nboot,conf)# mytree is pooled tree of class phylo
+  }
+  #out <- FUN(3)
+  ans <- tryCatch(FUN(e), error = function(e){return()})
+  return(ans)
+}
 
 #' @useDynLib iNEXTPD2
 #' @importFrom Rcpp sourceCpp

@@ -249,3 +249,69 @@ NumericVector qD_MLE(NumericVector q,NumericVector ai){
   }
   return Q;
 }
+
+// [[Rcpp::export]]
+double D1_2nd(double n, double f1, double A) {
+  double q1 = 0;
+  double h2 = 0;
+  if(A==1||f1==0){
+    h2 = 0;
+  }else{
+    for(int r = 1; r < n; r++){
+      q1 = q1 + pow((1-A),r)/r;
+    }
+    h2 = (f1/n)*(pow(1-A,(-n+1)))*(-log(A)-q1);
+  }
+  return(h2);
+}
+
+// [[Rcpp::export]]
+NumericVector Dq_TD(NumericMatrix ifi, int n,NumericVector qs,double f1, double A){
+  int nrows = ifi.nrow(), z = 0 , qlength = qs.length();
+  double delta = 0.0;
+  //NumericMatrix deltas(nrows,n);
+  NumericMatrix ans_i(nrows,qlength);
+  for(int i = 0; i<nrows; i++){
+    z = ifi(i,0);
+    for(int k = 0; k<=n-z; k++){
+      delta = Rf_dhyper( 1, z, n - z, k+1, false )/(k+1);
+      //deltas(i,k) = Rf_dhyper( 1, z, n - z, k+1, false )/(k+1);
+      for(int i_q = 0; i_q<qlength; i_q++){
+        ans_i(i,i_q) = ans_i(i,i_q) + ifi(i,1) * Rf_choose(k-qs[i_q],k)*delta;
+      }
+    }
+  }
+  NumericVector ans_1(qlength);
+  for(int i_q = 0; i_q<qlength; i_q++){
+    for(int i = 0; i<nrows; i++){
+      ans_1(i_q) = ans_1(i_q) + ans_i(i,i_q);
+    }
+    ans_1(i_q) = ans_1(i_q) + Dq_2nd(n,f1,A,qs[i_q]);
+    ans_1(i_q) = pow(ans_1(i_q),1/(1-qs[i_q]));
+  }
+  return(ans_1);
+}
+
+// [[Rcpp::export]]
+NumericVector qDFUN(NumericVector q,NumericVector Xi,const int n){
+  const int length = q.size();
+  const int Sobs = Xi.size();
+  NumericVector Q(length);
+  NumericVector delta(n);
+  NumericVector temp(Sobs);
+  for(int k=0;k<=(n-1);k++){
+    for(int i = 0;i<Sobs;i++){
+      temp[i] = (Xi[i]/n)*exp(Rf_lchoose(n-Xi[i],k)-Rf_lchoose(n-1,k));
+    }
+    delta[k] = sum(temp);
+  }
+  
+  for(int i=0;i<length;i++){
+    float temp = 0;
+    for(int k=0;k<=(n-1);k++){
+      temp = temp + (Rf_choose(q[i]-1,k)*pow(-1,k)*delta[k]);
+    }
+    Q[i] = temp;
+  }
+  return Q;
+}

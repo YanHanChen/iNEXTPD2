@@ -45,3 +45,15 @@ qD_MLE <- function(q, ai) {
     .Call('_iNEXTPD2_qD_MLE', PACKAGE = 'iNEXTPD2', q, ai)
 }
 
+D1_2nd <- function(n, f1, A) {
+    .Call('_iNEXTPD2_D1_2nd', PACKAGE = 'iNEXTPD2', n, f1, A)
+}
+
+Dq_TD <- function(ifi, n, qs, f1, A) {
+    .Call('_iNEXTPD2_Dq_TD', PACKAGE = 'iNEXTPD2', ifi, n, qs, f1, A)
+}
+
+qDFUN <- function(q, Xi, n) {
+    .Call('_iNEXTPD2_qDFUN', PACKAGE = 'iNEXTPD2', q, Xi, n)
+}
+

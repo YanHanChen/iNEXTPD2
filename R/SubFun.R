@@ -1,4 +1,4 @@
-## quiets concerns of R CMD check re: the .'s that appear in pipelines
+#====== quiets concerns of R CMD check re: the .'s that appear in pipelines =====
 utils::globalVariables(c("Inode", "LCL", "Method", "Order.q", "Reftime", "SC", "Type",
                          "UCL", "branch.abun", "branch.height", "branch.length","branch.length.new", 
                          "cumsum.length", "e", "edgelengthv", "goalSC","label", "label.new", 
@@ -141,7 +141,7 @@ EmpPD <- function(datalist,datatype, phylotr, q, reft, cal, nboot, conf){
                    qPD = out[,1],qPD.LCL = out[,2], qPD.UCL = out[,3],
                    Reftime = rep(reft,length(q)*length(datalist)),
                    Method='Empirical',
-                   Type=ifelse(cal=="PD", "PD", "meanPD")) %>%
+                   Type=cal) %>%
     arrange(Reftime)
   return(Output)
 }
@@ -250,7 +250,7 @@ EmpPD2 <- function(datalist,datatype, phylotr, q, reft, cal, nboot, conf){
                    qPD = out[,1],qPD.LCL = out[,2], qPD.UCL = out[,3],
                    Reftime = rep(reft_complete,length(q)*length(datalist)),
                    Method='Empirical',
-                   Type=ifelse(cal=="PD", "PD", "meanPD")) %>%
+                   Type=cal) %>%
     arrange(Reftime)
   return(Output)
 }
@@ -648,10 +648,119 @@ AsyPD <- function(datalist, datatype, phylotr, q,reft, cal,nboot, conf){#change 
   }
   Estoutput <- do.call(rbind,Estoutput) %>%
     mutate(Assemblage = rep(names(datalist),each = length(q)*tau_l),Method = 'Asymptotic',
-           Type=ifelse(cal=="PD", "PD", "meanPD")) %>%
+           Type=cal) %>%
     select(Assemblage,Order.q,qPD,qPD.LCL, qPD.UCL, 
            Reftime,Method, Type) %>%
     arrange(Reftime)
+  Estoutput$qPD.LCL[Estoutput$qPD.LCL<0] = 0
+  return(Estoutput)
+}
+AsyPD2 <- function(datalist, datatype, phylotr, q,reft, cal,nboot, conf){#change final list name
+  nms <- names(datalist)
+  qtile <- qnorm(1-(1-conf)/2)
+  tau_l <- length(reft)
+  reft_complete <- reft
+  if(datatype=="abundance"){
+    Estoutput <- lapply(datalist,function(x){
+      #atime <- Sys.time()
+      x <- x[x>0]
+      n <- sum(x)
+      aL <- phyBranchAL_Abu(phylo = phylotr,data = x,datatype,refT = reft)
+      #divide reference time into two parts.
+      first_parent <- aL$treeNabu %>% filter(tgroup=='Tip') %>% select(branch.length) %>% min
+      reft_taxo <- reft[reft <= first_parent]
+      reft <- reft[reft > first_parent]
+      if(length(reft_taxo)>0) {
+        aL$BLbyT <- aL$BLbyT[,-(1:length(reft_taxo))]
+        ans_taxo <- TD.q.est(x=x,q=q,datatype=datatype,nboot=nboot,conf=conf,cal=cal,reft_taxo=reft_taxo)
+        ans_taxo <- tibble(Order.q = rep(q, each=length(reft_taxo)),qPD = ans_taxo[,1],
+                           qPD.LCL = ans_taxo[,2], qPD.UCL = ans_taxo[,3],Reftime = rep(reft_taxo,length(q)))
+      }
+      #aL$treeNabu$branch.length <- aL$BLbyT[,1]
+      #aL_table <- aL$treeNabu %>% select(branch.abun,branch.length,tgroup)
+      est <- PhD.q.est(ai = aL$treeNabu$branch.abun,Lis = aL$BLbyT,q = q,nt = n,cal = cal)
+      if(nboot!=0){
+        Boots <- Boots.one(phylo = phylotr,aL = aL$treeNabu,datatype,nboot,reft = reft, BLs = aL$BLbyT )
+        Li_b <- Boots$Li
+        Li_b <- sapply(1:length(reft),function(l){
+          tmp <- Li_b[,l]
+          tmp[tmp>reft[l]] <- reft[l]
+          tmp
+        })
+        f0 <- Boots$f0
+        # tgroup_B <- c(rep("Tip",length(x)+f0),rep("Inode",nrow(Li_b)-length(x)-f0))
+        # aL_table_b <- tibble(branch.abun = 0, branch.length= Li_b[,1],tgroup = tgroup_B)
+        ses <- sapply(1:nboot, function(B){
+          ai_B <- Boots$boot_data[,B]
+          isn0 <- ai_B>0
+          outb <- PhD.q.est(ai = ai_B[isn0],Lis = Li_b[isn0,,drop=F],q = q,nt = n,cal = cal)
+          return(outb)
+        }) %>% apply(., 1, sd)
+      }else{
+        ses <- rep(NA,length(est))
+      }
+      est <- tibble(Order.q = rep(q,length(reft)), qPD = est,
+                    qPD.LCL = est - qtile*ses, qPD.UCL = est + qtile*ses,
+                    Reftime = rep(reft,each = length(q)))
+      if(length(reft_taxo)>0) {
+        est <- rbind(ans_taxo,est) %>% arrange(Order.q,Reftime)
+      }
+      est
+    })
+  }else if(datatype=="incidence_raw"){
+    Estoutput <- lapply(datalist,function(x){
+      #atime <- Sys.time()
+      x <- x[rowSums(x)>0,colSums(x)>0]
+      n <- ncol(x)
+      aL <- phyBranchAL_Inc(phylo = phylotr,data = x,datatype,refT = reft)
+      #divide reference time into two parts.
+      first_parent <- aL$treeNabu %>% filter(tgroup=='Tip') %>% select(branch.length) %>% min
+      reft_taxo <- reft[reft <= first_parent]
+      reft <- reft[reft > first_parent]
+      if(length(reft_taxo)>0) {
+        aL$BLbyT <- aL$BLbyT[,-(1:length(reft_taxo))]
+        ans_taxo <- TD.q.est(x=x,q=q,datatype=datatype,nboot=nboot,conf=conf,cal=cal,reft_taxo=reft_taxo)
+        ans_taxo <- tibble(Order.q = rep(q, each=length(reft_taxo)),qPD = ans_taxo[,1],
+                           qPD.LCL = ans_taxo[,2], qPD.UCL = ans_taxo[,3],Reftime = rep(reft_taxo,length(q)))
+      }
+      
+      est <- PhD.q.est(ai = aL$treeNabu$branch.abun,Lis = aL$BLbyT,q = q,nt = n,cal = cal)
+      if(nboot!=0){
+        Boots <- Boots.one(phylo = phylotr,aL = aL$treeNabu,datatype = datatype,nboot = nboot,
+                           splunits = n,reft = reft, BLs = aL$BLbyT )
+        Li_b <- Boots$Li
+        Li_b <- sapply(1:length(reft),function(l){
+          tmp <- Li_b[,l]
+          tmp[tmp>reft[l]] <- reft[l]
+          tmp
+        })
+        f0 <- Boots$f0
+        # tgroup_B <- c(rep("Tip",nrow(x)+f0),rep("Inode",nrow(Li_b)-nrow(x)-f0))
+        # aL_table_b <- tibble(branch.abun = 0, branch.length= Li_b[,1],tgroup = tgroup_B)
+        ses <- sapply(1:nboot, function(B){
+          ai_B <- Boots$boot_data[,B]
+          isn0 <- ai_B>0
+          outb <- PhD.q.est(ai = ai_B[isn0],Lis = Li_b[isn0,,drop=F],q = q,nt = n,cal = cal)
+          return(outb)
+        }) %>% apply(., 1, sd)
+      }else{
+        ses <- rep(NA,length(est))
+      }
+      est <- tibble(Order.q = rep(q,length(reft)), qPD = est,
+                    qPD.LCL = est - qtile*ses, qPD.UCL = est + qtile*ses,
+                    Reftime = rep(reft,each = length(q)))
+      if(length(reft_taxo)>0) {
+        est <- rbind(ans_taxo,est) %>% arrange(Order.q,Reftime)
+      }
+      est
+    })
+  }
+  Estoutput <- do.call(rbind,Estoutput) %>%
+    mutate(Assemblage = rep(names(datalist),each = length(q)*tau_l),Method = 'Asymptotic',
+           Type=cal) %>%
+    select(Assemblage,Order.q,qPD,qPD.LCL, qPD.UCL, 
+           Reftime,Method, Type) %>%
+    arrange(Order.q,Reftime)
   Estoutput$qPD.LCL[Estoutput$qPD.LCL<0] = 0
   return(Estoutput)
 }
@@ -987,14 +1096,14 @@ inextPD = function(datalist, datatype, phylotr, q,reft, m, cal, nboot, conf=0.95
                       qPD=qPDm,qPD.LCL=qPDm-qtile*ses_pd,qPD.UCL=qPDm+qtile*ses_pd,
                       SC=SC_,SC.LCL=SC.LCL_,SC.UCL=SC.UCL_,
                       Reftime = reft_,
-                      Type=ifelse(cal=="PD", "PD", "meanPD")) %>%
+                      Type=cal) %>%
         arrange(Reftime,Order.q,m)
       out_m$qPD.LCL[out_m$qPD.LCL<0] <- 0;out_m$SC.LCL[out_m$SC.LCL<0] <- 0
       out_m$SC.UCL[out_m$SC.UCL>1] <- 1
       if(unconditional_var){
         ses_pd_unc <- ses[-(1:(length(qPDm)+length(covm)))]
         out_C <- qPD_unc %>% mutate(qPD.LCL = qPD-qtile*ses_pd_unc,qPD.UCL = qPD+qtile*ses_pd_unc,
-                                    Type=ifelse(cal=="PD", "PD", "meanPD"),
+                                    Type=cal,
                                     Assemblage = nms[i])
         id_C <- match(c('Assemblage','goalSC','SC','m', 'Method', 'Order.q', 'qPD', 'qPD.LCL','qPD.UCL','Reftime',
                         'Type'), names(out_C), nomatch = 0)
@@ -1082,14 +1191,14 @@ inextPD = function(datalist, datatype, phylotr, q,reft, m, cal, nboot, conf=0.95
                       qPD=qPDm,qPD.LCL=qPDm-qtile*ses_pd,qPD.UCL=qPDm+qtile*ses_pd,
                       SC=SC_,SC.LCL=SC.LCL_,SC.UCL=SC.UCL_,
                       Reftime = reft_,
-                      Type=ifelse(cal=="PD", "PD", "meanPD")) %>%
+                      Type=cal) %>%
         arrange(Reftime,Order.q,nt)
       out_m$qPD.LCL[out_m$qPD.LCL<0] <- 0;out_m$SC.LCL[out_m$SC.LCL<0] <- 0
       out_m$SC.UCL[out_m$SC.UCL>1] <- 1
       if(unconditional_var){
         ses_pd_unc <- ses[-(1:(length(qPDm)+length(covm)))]
         out_C <- qPD_unc %>% mutate(qPD.LCL = qPD-qtile*ses_pd_unc,qPD.UCL = qPD+qtile*ses_pd_unc,
-                                    Type=ifelse(cal=="PD", "PD", "meanPD"),
+                                    Type=cal,
                                     Assemblage = nms[i])
         id_C <- match(c('Assemblage','goalSC','SC','nt', 'Method', 'Order.q', 'qPD', 'qPD.LCL','qPD.UCL','Reftime',
                         'Type'), names(out_C), nomatch = 0)
@@ -1431,7 +1540,7 @@ invChatPD <- function(datalist, datatype,phylotr, q, reft, cal,level, nboot, con
   }
   Assemblage = rep(names(datalist), each = length(q)*length(reft)*length(level))
   out <- out %>% mutate(Assemblage = Assemblage,
-                        Type=ifelse(cal=="PD", "PD", "meanPD"))
+                        Type=cal)
   if(datatype=='abundance'){
     out <- out %>% select(Assemblage,goalSC,SC,m,Method,Order.q,qPD,qPD.LCL,qPD.UCL,
                           Reftime,Type) %>% arrange(Reftime,goalSC,Order.q)
@@ -1619,7 +1728,7 @@ invChatPD_inc <- function(x,ai,Lis, q, Cs, n,cal){ # x is a matrix
 #====Sub Functions: when reftime < the age of first divergence======
 
 #' @importFrom stats rmultinom
-TD.Tprofile <- function(x,q, datatype="abundance",nboot=50, conf=0.95,cal,reft_taxo){
+TD.Tprofile <- function(x,q,datatype="abundance",nboot=50,conf=0.95,cal,reft_taxo){
   qtile <- qnorm(1-(1-conf)/2)
   if(cal=='meanPD') reft_taxo <- rep(1,length(reft_taxo))
   reft_taxo_dummy <- rep(reft_taxo,length(q))
@@ -1729,4 +1838,116 @@ EstiBootComm.Sam <- function(Spec)
   return(sort(c(Prob.hat, Prob.hat.Unse), decreasing=TRUE))									#Output: a vector of estimated detection probability
 }
 
-
+TD.q.est <- function(x,q,datatype="abundance",nboot=50,conf=0.95,cal,reft_taxo){
+  qtile <- qnorm(1-(1-conf)/2)
+  if(cal=='meanPD') reft_taxo <- rep(1,length(reft_taxo))
+  reft_taxo_dummy <- rep(reft_taxo,length(q))
+  if(datatype=="abundance"){
+    dq <- rep(Diversity_profile(x,q),each = length(reft_taxo))*reft_taxo_dummy
+    if(nboot>1){
+      Prob.hat <- EstiBootComm.Ind(x)
+      ses <- sapply(1:length(reft_taxo), function(l){
+        Abun.Mat <- rmultinom(nboot, sum(x), Prob.hat)
+        se <- apply(matrix(apply(Abun.Mat, 2, function(xb) Diversity_profile(xb,q))*reft_taxo[l],
+                           nrow = length(q)), 1, sd, na.rm=TRUE)
+        c(se)
+      }) %>% matrix(.,nrow = length(q),ncol = length(reft_taxo)) %>% t %>% c
+    }else{ses = rep(NA,length(reft_taxo)*length(q))}
+  }else if(datatype=='incidence_raw'){
+    nT <- ncol(x)
+    x <- c(nT,rowSums(x))
+    dq <- rep(Diversity_profile.inc(x,q),each = length(reft_taxo))*reft_taxo_dummy
+    if(nboot>1){
+      Prob.hat <- EstiBootComm.Sam(x)
+      ses <- sapply(1:length(reft_taxo), function(l){
+        Abun.Mat <- t(sapply(Prob.hat, function(p) rbinom(nboot, nT, p)))
+        Abun.Mat <- matrix(c(rbind(nT, Abun.Mat)),ncol=nboot)
+        tmp <- which(colSums(Abun.Mat)==nT)
+        if(length(tmp)>0) Abun.Mat <- Abun.Mat[,-tmp]
+        if(ncol(Abun.Mat)==0){
+          se = NA
+          warning("Insufficient data to compute bootstrap s.e.")
+        }else{		
+          se <- apply(matrix(apply(Abun.Mat, 2, function(yb) Diversity_profile.inc(yb,q))*reft_taxo[l],
+                             nrow = length(q)), 1, sd, na.rm=TRUE)
+        }
+        se
+      }) %>% matrix(.,nrow = length(q),ncol = length(reft_taxo)) %>% t %>% c
+      
+    }else{ses = rep(NA,length(reft_taxo)*length(q))}
+  }
+  output <- cbind(dq,dq-qtile*ses,dq+qtile*ses)
+  output
+}
+Diversity_profile <- function(x,q){
+  x = x[x>0]
+  n = sum(x)
+  f1 = sum(x==1)
+  f2 = sum(x==2)
+  p1 = ifelse(f2>0,2*f2/((n-1)*f1+2*f2),ifelse(f1>0,2/((n-1)*(f1-1)+2),1))
+  sortx = sort(unique(x))
+  tab = table(x)
+  Sub_q012 <- function(q){
+    if(q==0){
+      length(x) + (n-1)/n*ifelse(f2>0, f1^2/2/f2, f1*(f1-1)/2)
+    }else if(q==1){
+      A <- sum(tab*sortx/n*(digamma(n)-digamma(sortx)))
+      B <- D1_2nd(n,f1,p1)
+      exp(A+B)
+    }else if(abs(q-round(q))==0){
+      A <- sum(tab[sortx>=q]*exp(lchoose(sortx[sortx>=q],q)-lchoose(n,q)))
+      A^(1/(1-q))
+    }
+  }
+  ans <- rep(0,length(q))
+  q_part1 = which(abs(q-round(q))==0)
+  if(length(q_part1)>0){
+    ans[q_part1] <- sapply(q[q_part1], Sub_q012)
+  }
+  q_part2 <- which(!abs(q-round(q))==0)
+  if(length(q_part2)>0){
+    ans[q_part2] <- Dq_TD(ifi = cbind(i = sortx, fi = tab),n = n,qs = q[q_part2],f1 = f1,A = p1)
+  }
+  ans
+}
+Diversity_profile.inc <- function(data,q){
+  nT = data[1]
+  Yi = data[-1]
+  Yi <- Yi[Yi!=0]
+  U <- sum(Yi)
+  Q1 <- sum(Yi==1)
+  Q2 <- sum(Yi==2)
+  Sobs <- length(Yi)
+  A <- AA.inc(data)
+  Q0hat <- ifelse(Q2 == 0, (nT - 1) / nT * Q1 * (Q1 - 1) / 2, (nT - 1) / nT * Q1 ^ 2/ 2 / Q2)
+  B <- sapply(q,function(q) ifelse(A==1,0,(Q1/nT)*(1-A)^(-nT+1)*(A^(q-1)-sum(sapply(c(0:(nT-1)),function(r) choose(q-1,r)*(A-1)^r)))))
+  qD <- (U/nT)^(q/(q-1))*(qDFUN(q,Yi,nT) + B)^(1/(1-q))
+  qD[which(q==0)] = Sobs+Q0hat
+  yi <- Yi[Yi>=1 & Yi<=(nT-1)]
+  delta <- function(i){
+    (yi[i]/nT)*sum(1/c(yi[i]:(nT-1)))
+  }
+  if(sum(q %in% 1)>0){
+    C_ <- ifelse(A==1,0,(Q1/nT)*(1-A)^(-nT+1)*(-log(A)-sum(sapply(c(1:(nT-1)),function(r) (1-A)^r/r))))
+    qD[which(q==1)] <- exp((nT/U)*( sum(sapply(c(1:length(yi)),function(i) delta(i))) + C_)+log(U/nT))
+  }
+  return(qD)
+}
+AA.inc <- function(data){
+  nT = data[1]
+  U <- sum(data[-1])
+  data = data[-1]
+  Yi = data[data!=0]
+  Q1 <- sum(Yi==1)
+  Q2 <- sum(Yi==2)
+  if(Q2>0 & Q1>0){
+    A <- 2*Q2/((nT-1)*Q1+2*Q2)
+  }
+  else if(Q2==0 & Q1>1){
+    A <- 2/((nT-1)*(Q1-1)+2)
+  }
+  else{
+    A <- 1
+  }
+  return(A)
+}
